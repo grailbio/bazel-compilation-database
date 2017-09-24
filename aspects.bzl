@@ -108,7 +108,7 @@ def _compilation_database_impl(ctx):
         compilation_db += target[CompilationAspect].compilation_db
 
     content = "[\n" + _compilation_db_json(compilation_db) + "\n]"
-    ctx.file_action(output=ctx.outputs.filename, content=_compilation_db_json(compilation_db))
+    ctx.file_action(output=ctx.outputs.filename, content=content)
 
 
 compilation_database = rule(
