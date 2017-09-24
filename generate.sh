@@ -51,5 +51,6 @@ echo "[" > "${COMPDB_FILE}"
 find "${EXEC_ROOT}" -name '*.compile_commands.json' -exec bash -c 'cat "$1" && echo ,' _ {} \; \
   >> "${COMPDB_FILE}"
 sed -i.bak -e '/^,$/d' -e '$s/,$//' "${COMPDB_FILE}"  # Hygiene to make valid json
+sed -i.bak -e "s|__EXEC_ROOT__|${EXEC_ROOT}|" "${COMPDB_FILE}"  # Replace exec_root marker
 rm "${COMPDB_FILE}.bak"
 echo "]" >> "${COMPDB_FILE}"

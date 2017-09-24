@@ -69,14 +69,9 @@ def _compilation_database_aspect_impl(target, ctx):
         commandline = (compiler + " " + " ".join(compile_flags) + force_cpp_mode_option +
                        " -c " + src.short_path)
 
-        # TODO(sbagaria): Do not rely on this bazel bug to get absolute path for exec_root.
-        # https://groups.google.com/d/msg/bazel-discuss/dOvRF3JSm-Q/vGKWgm-TFQAJ
-        root = str(src.root).split("[")[0]
-        is_not_external = (str(src.owner).startswith("@//") or
-                           str(src.owner).startswith("//"))
-        exec_root = root + ("/bazel-" + root.split("/")[-1] if is_not_external
-                            else "/execroot/" + ctx.workspace_name)
-        compilation_db.append(struct(directory=exec_root, command=commandline, file=src.path))
+        exec_root_marker = "__EXEC_ROOT__"
+        compilation_db.append(
+            struct(directory=exec_root_marker, command=commandline, file=src.path))
 
     # Write the commands for this target.
     compdb_file = ctx.actions.declare_file(ctx.label.name + ".compile_commands.json")

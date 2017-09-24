@@ -39,6 +39,9 @@ compilation_database(
 )
 ```
 
+Note that you will have to replace "__EXEC_ROOT__" in the generated file with
+the output of `bazel info execution_root`.
+
 Contributing
 ------------
 
