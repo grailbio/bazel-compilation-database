@@ -70,8 +70,7 @@ def _compilation_database_aspect_impl(target, ctx):
                        " -c " + src.short_path)
 
         # TODO: This exec_root hack does not work for external repos.
-        root = str(src.root).split("[")[0]
-        exec_root = root + "/bazel-" + root.split("/")[-1]
+        exec_root = "bazel-" + str(ctx.workspace_name)
         compilation_db.append(struct(directory=exec_root, command=commandline, file=src.short_path))
 
     # Write the commands for this target.
