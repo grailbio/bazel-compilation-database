@@ -33,7 +33,7 @@ readonly QUERY_CMD=(
   bazel query
     --noshow_progress
     --noshow_loading_progress
-    'kind(cc_.*, //...)'
+    'kind("cc_(library|binary|test)", //...)'
 )
 
 # Clean any previously generated files.
