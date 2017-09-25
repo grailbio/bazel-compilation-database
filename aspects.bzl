@@ -1,11 +1,11 @@
 # Copyright 2017 GRAIL, Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,46 +32,50 @@ def _compilation_db_json(compilation_db):
     entries = [entry.to_json() for entry in compilation_db]
     return ",\n ".join(entries)
 
+def _is_cpp_target(srcs):
+    for src in srcs:
+        for extension in _cpp_extensions:
+            if src.extension == extension:
+                return True
+    return False
 
 def _compilation_database_aspect_impl(target, ctx):
     # Write the compile commands for this target to a file, and return
     # the commands for the transitive closure.
 
     compilation_db = []
-    sources = [f for src in ctx.rule.attr.srcs for f in src.files]
-    for src in sources:
-        if not src.is_source:
-            continue 
 
-        cpp_fragment = ctx.fragments.cpp
-        compiler = str(cpp_fragment.compiler_executable)
-        compile_flags = (cpp_fragment.compiler_options(ctx.features)
-                         + cpp_fragment.c_options
-                         + target.cc.compile_flags
-                         + ctx.rule.attr.copts
-                         + cpp_fragment.unfiltered_compiler_options(ctx.features))
+    cpp_fragment = ctx.fragments.cpp
+    compiler = str(cpp_fragment.compiler_executable)
+    compile_flags = (cpp_fragment.compiler_options(ctx.features)
+                     + cpp_fragment.c_options
+                     + target.cc.compile_flags
+                     + ctx.rule.attr.copts
+                     + cpp_fragment.unfiltered_compiler_options(ctx.features))
 
-        # system built-in directories (helpful for macOS).
-        if cpp_fragment.libc == "macosx":
-            compile_flags += ["-isystem " + str(d)
-                              for d in cpp_fragment.built_in_include_directories]
+    # system built-in directories (helpful for macOS).
+    if cpp_fragment.libc == "macosx":
+        compile_flags += ["-isystem " + str(d)
+                          for d in cpp_fragment.built_in_include_directories]
 
-        # This is useful for compiling .h headers by libclang.
-        # For headers, YCM finds a counterpart source file for getting flags.
-        # TODO: Explicitly add headers for which a counterpart source file does not exist.
-        force_cpp_mode_option = ""
-        for extension in _cpp_extensions:
-            if src.extension == extension:
-                compile_flags += cpp_fragment.cxx_options(ctx.features)
-                force_cpp_mode_option = " -x c++"
-                break
+    srcs = [f for src in ctx.rule.attr.srcs for f in src.files]
+    if "hdrs" in dir(ctx.rule.attr):
+        srcs += [f for src in ctx.rule.attr.hdrs for f in src.files]
 
-        commandline = (compiler + " " + " ".join(compile_flags) + force_cpp_mode_option +
-                       " -c " + src.short_path)
+    # This is useful for compiling .h headers as C++ code.
+    force_cpp_mode_option = ""
+    if _is_cpp_target(srcs):
+        compile_flags += cpp_fragment.cxx_options(ctx.features)
+        force_cpp_mode_option = " -x c++"
+
+    compile_command = compiler + " " + " ".join(compile_flags) + force_cpp_mode_option  
+
+    for src in srcs:
+        command_for_file = compile_command + " -c " + src.path
 
         exec_root_marker = "__EXEC_ROOT__"
         compilation_db.append(
-            struct(directory=exec_root_marker, command=commandline, file=src.path))
+            struct(directory=exec_root_marker, command=command_for_file, file=src.path))
 
     # Write the commands for this target.
     compdb_file = ctx.actions.declare_file(ctx.label.name + ".compile_commands.json")
