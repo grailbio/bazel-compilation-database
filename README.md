@@ -1,4 +1,4 @@
-Compilation database with Bazel
+Compilation database with Bazel [![Build Status](https://travis-ci.org/grailbio/bazel-compilation-database.svg?branch=master)](https://travis-ci.org/grailbio/bazel-compilation-database)
 ===============================
 
 If you use [Bazel][bazel] and want to use libclang based editors and tools, you
@@ -35,12 +35,15 @@ compilation_database(
     targets = [
         "//a_cc_binary_label",
         "//a_cc_library_label",
-    ]
+    ],
+    exec_root_marker = True,
 )
 ```
 
 Note that you will have to replace "__EXEC_ROOT__" in the generated file with
-the output of `bazel info execution_root`.
+the output of `bazel info execution_root`. Or you can set `exec_root_marker`
+attribute to `False` in which case, the directory entry will simply be
+`bazel-{workspace name}`
 
 Contributing
 ------------

@@ -110,13 +110,21 @@ def _compilation_database_impl(ctx):
     for target in ctx.attr.targets:
         compilation_db += target[CompilationAspect].compilation_db
 
-    content = "[\n" + _compilation_db_json(compilation_db) + "\n]"
+    content = "[\n" + _compilation_db_json(compilation_db) + "\n]\n"
+    if not ctx.attr.exec_root_marker:
+        content = content.replace("__EXEC_ROOT__", "bazel-" + ctx.workspace_name)
     ctx.file_action(output=ctx.outputs.filename, content=content)
 
 
 compilation_database = rule(
     attrs = {
-        "targets": attr.label_list(aspects = [compilation_database_aspect]),
+        "targets": attr.label_list(
+            aspects = [compilation_database_aspect],
+            doc = "List of all cc targets which should be included."),
+        "exec_root_marker": attr.bool(
+            default = True,
+            doc = ("Whether a marker '__EXEC_ROOT__' should be output as the directory. " +
+                   "If false, the directory will be bazel-{workspace name}")),
     },
     outputs = {
         "filename": "compile_commands.json",
