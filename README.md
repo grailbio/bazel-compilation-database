@@ -37,14 +37,10 @@ compilation_database(
         "//a_cc_binary_label",
         "//a_cc_library_label",
     ],
-    exec_root_marker = True,
+    # ideally should be the same as `bazel info execution_root`.
+    exec_root = "/path/to/bazel/exec_root",
 )
 ```
-
-Note that you will have to replace "__EXEC_ROOT__" in the generated file with
-the output of `bazel info execution_root`. Or you can set `exec_root_marker`
-attribute to `False` in which case, the directory entry will simply be
-`bazel-{workspace name}`
 
 Contributing
 ------------
