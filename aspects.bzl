@@ -39,9 +39,26 @@ def _is_cpp_target(srcs):
                 return True
     return False
 
+def _sources(target, ctx):
+    srcs = []
+    if "srcs" in dir(ctx.rule.attr):
+        srcs += [f for src in ctx.rule.attr.srcs for f in src.files]
+    if "hdrs" in dir(ctx.rule.attr):
+        srcs += [f for src in ctx.rule.attr.hdrs for f in src.files]
+
+    if ctx.rule.kind == "cc_proto_library":
+        srcs += [f for f in target.files if f.extension in ["h", "cc"]]
+
+    return srcs
+
 def _compilation_database_aspect_impl(target, ctx):
     # Write the compile commands for this target to a file, and return
     # the commands for the transitive closure.
+
+    # We support only these rule kinds.
+    if ctx.rule.kind not in ["cc_library", "cc_binary", "cc_test",
+                             "cc_inc_library", "cc_proto_library"]:
+        return []
 
     compilation_db = []
 
@@ -50,7 +67,7 @@ def _compilation_database_aspect_impl(target, ctx):
     compile_flags = (cpp_fragment.compiler_options(ctx.features)
                      + cpp_fragment.c_options
                      + target.cc.compile_flags
-                     + ctx.rule.attr.copts
+                     + (ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else [])
                      + cpp_fragment.unfiltered_compiler_options(ctx.features))
 
     # system built-in directories (helpful for macOS).
@@ -58,9 +75,11 @@ def _compilation_database_aspect_impl(target, ctx):
         compile_flags += ["-isystem " + str(d)
                           for d in cpp_fragment.built_in_include_directories]
 
-    srcs = [f for src in ctx.rule.attr.srcs for f in src.files]
-    if "hdrs" in dir(ctx.rule.attr):
-        srcs += [f for src in ctx.rule.attr.hdrs for f in src.files]
+    srcs = _sources(target, ctx)
+    if not srcs:
+        # This should not happen for any of our supported rule kinds.
+        print("Rule with no sources: " + str(target.label))
+        return []
 
     # This is useful for compiling .h headers as C++ code.
     force_cpp_mode_option = ""
@@ -68,7 +87,7 @@ def _compilation_database_aspect_impl(target, ctx):
         compile_flags += cpp_fragment.cxx_options(ctx.features)
         force_cpp_mode_option = " -x c++"
 
-    compile_command = compiler + " " + " ".join(compile_flags) + force_cpp_mode_option  
+    compile_command = compiler + " " + " ".join(compile_flags) + force_cpp_mode_option
 
     for src in srcs:
         command_for_file = compile_command + " -c " + src.path
@@ -87,6 +106,8 @@ def _compilation_database_aspect_impl(target, ctx):
     compilation_db = depset(compilation_db)
     all_compdb_files = depset([compdb_file])
     for dep in ctx.rule.attr.deps:
+        if CompilationAspect not in dep:
+            continue
         compilation_db += dep[CompilationAspect].compilation_db
         all_compdb_files += dep[OutputGroupInfo].compdb_files
 
