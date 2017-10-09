@@ -23,7 +23,7 @@
 set -e
 
 readonly ASPECTS_DIR="$(dirname "$0")"
-readonly ASPECTS_FILE="${ASPECTS_DIR}/aspects.bzl"
+readonly ASPECTS_FILE="${ASPECTS_DIR/#.\/}/aspects.bzl"
 readonly OUTPUT_GROUPS="compdb_files"
 
 readonly WORKSPACE="$(bazel info workspace)"
@@ -59,5 +59,8 @@ sed -i.bak -e "s|__EXEC_ROOT__|${EXEC_ROOT}|" "${COMPDB_FILE}"  # Replace exec_r
 rm "${COMPDB_FILE}.bak"
 echo "]" >> "${COMPDB_FILE}"
 
-ln -f -s "${COMPDB_FILE}" "${WORKSPACE}/"
-ln -f -s "${COMPDB_FILE}" "${EXEC_ROOT}/"
+ln -f -s "${PWD}/${COMPDB_FILE}" "${WORKSPACE}/"
+
+# This is for YCM to help find the DB when following generated files.
+# The file may be deleted by bazel on the next build.
+ln -f -s "${PWD}/${COMPDB_FILE}" "${EXEC_ROOT}/"
