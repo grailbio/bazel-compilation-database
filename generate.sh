@@ -38,7 +38,9 @@ readonly QUERY_CMD=(
 )
 
 # Clean any previously generated files.
-find "${EXEC_ROOT}" -name '*.compile_commands.json' -delete
+if [[ -e "${EXEC_ROOT}" ]]; then
+  find "${EXEC_ROOT}" -name '*.compile_commands.json' -delete
+fi
 
 # shellcheck disable=SC2046
 bazel build \
