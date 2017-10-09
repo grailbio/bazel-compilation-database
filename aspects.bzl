@@ -73,9 +73,9 @@ def _compilation_database_aspect_impl(target, ctx):
     for src in srcs:
         command_for_file = compile_command + " -c " + src.path
 
-        exec_root_marker = "__EXEC_ROOT__"
+        bazel_workspace_dir = "__WORKSPACE_ROOT__" + "/bazel-" + ctx.workspace_name
         compilation_db.append(
-            struct(directory=exec_root_marker, command=command_for_file, file=src.path))
+            struct(directory=bazel_workspace_dir, command=command_for_file, file=src.path))
 
     # Write the commands for this target.
     compdb_file = ctx.actions.declare_file(ctx.label.name + ".compile_commands.json")
@@ -111,8 +111,8 @@ def _compilation_database_impl(ctx):
         compilation_db += target[CompilationAspect].compilation_db
 
     content = "[\n" + _compilation_db_json(compilation_db) + "\n]\n"
-    if not ctx.attr.exec_root_marker:
-        content = content.replace("__EXEC_ROOT__", "bazel-" + ctx.workspace_name)
+    if ctx.attr.remove_workspace_root_marker:
+        content = content.replace("__WORKSPACE_ROOT__/", "")
     ctx.file_action(output=ctx.outputs.filename, content=content)
 
 
@@ -121,10 +121,10 @@ compilation_database = rule(
         "targets": attr.label_list(
             aspects = [compilation_database_aspect],
             doc = "List of all cc targets which should be included."),
-        "exec_root_marker": attr.bool(
+        "remove_workspace_root_marker": attr.bool(
             default = True,
-            doc = ("Whether a marker '__EXEC_ROOT__' should be output as the directory. " +
-                   "If false, the directory will be bazel-{workspace name}")),
+            doc = ("To add an absolute path to workspace root a placeholder '__WORKSPACE_ROOT__' is added which is removed by default 'True', providing a relative path to 'bazel-{workspace name}'." +
+                   "Set to 'False', keeps the placeholder which allows to replace with project root directory in a post-processing step.")),
     },
     outputs = {
         "filename": "compile_commands.json",

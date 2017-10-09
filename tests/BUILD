@@ -28,6 +28,6 @@ load("@compdb//:aspects.bzl", "compilation_database")
 
 compilation_database(
     name = "compdb",
-    exec_root_marker = False,
+    remove_workspace_root_marker = True,
     targets = ["B"],
 )
