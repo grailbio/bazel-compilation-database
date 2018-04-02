@@ -37,14 +37,16 @@ import xml.etree.ElementTree as ElementTree
 # Must be an absolute path or relative to the bazel workspace.
 ASPECTS_BZL = "bazel/compilation_database/aspects.bzl"
 
-def bazel_info_value(info, key):
-    """Gets the value for the given key from bazel info."""
+def bazel_info():
+    """Returns a dict containing key values from bazel info."""
 
-    for line in info:
+    bazel_info_dict = dict()
+    out = subprocess.check_output(['bazel', 'info']).decode('utf-8').strip().split('\n')
+    for line in out:
         key_val = line.strip().partition(": ")
-        if key_val[0] == key:
-            return key_val[2]
-    sys.exit("key not found in bazel info: " + key)
+        bazel_info_dict[key_val[0]] = key_val[2]
+
+    return bazel_info_dict
 
 def bazel_query(args):
     """Executes bazel query with the given args and returns the output."""
@@ -138,12 +140,17 @@ def standardize_flags(flags, bazel_workspace):
 
     return flags
 
+#pylint: disable=W0613,C0103
 def FlagsForFile(filename, **kwargs):
-    bazel_info = subprocess.check_output(['bazel', 'info']).decode('utf-8').strip().split('\n')
-    bazel_bin = bazel_info_value(bazel_info, 'bazel-bin')
-    bazel_genfiles = bazel_info_value(bazel_info, 'bazel-genfiles')
-    bazel_exec_root = bazel_info_value(bazel_info, 'execution_root')
-    bazel_workspace = bazel_info_value(bazel_info, 'workspace')
+    """Function that is called by YCM expecting a dict with at least a 'flags'
+    key that points to an array of strings as flags.
+    """
+
+    bazel_info_dict = bazel_info()
+    bazel_bin = bazel_info_dict['bazel-bin']
+    bazel_genfiles = bazel_info_dict['bazel-genfiles']
+    bazel_exec_root = bazel_info_dict['execution_root']
+    bazel_workspace = bazel_info_dict['workspace']
 
     os.chdir(bazel_workspace)
     # Valid prefixes for the file, in decreasing order of specificity.
