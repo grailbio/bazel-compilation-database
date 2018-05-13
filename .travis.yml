@@ -9,6 +9,5 @@ addons:
     - bazel
 
 script:
-  - cd tests
-  - bazel build :compdb
-  - diff expected_file.json bazel-bin/compile_commands.json
+  - bazel build //tests:compdb
+  - diff tests/expected_file.json bazel-bin/tests/compile_commands.json
