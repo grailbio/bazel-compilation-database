@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "a.h"
+#include "tests/a.h"
 
 class B : A {
  public:
