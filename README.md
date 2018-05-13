@@ -24,7 +24,7 @@ bazel-compilation-database-${RELEASE_VERSION}/generate.sh
 
 An alternative to running the `generate.sh` script is to define a target of
 rule type `compilation_database` with the attribute `targets` as a list of
-top-level `cc_.*` labels which you want to include in your compilation database. 
+top-level `cc_.*` labels which you want to include in your compilation database.
 For example,
 
 ```python
@@ -45,16 +45,43 @@ compilation_database(
 ycmd
 ----
 If you want to use this project solely for semantic auto completion using
-[ycmd][ycm] (YouCompleteMe) based editor plugins, then the recommended approach
-is to set your extra conf script to the bundled .ycm_extra_conf.py. With this,
-you don't have to maintain a separate compile_commands.json file through a
-script and/or a `compilation_database` target. Compile commands are fetched
-from bazel as the files are opened in your editor.
+[ycmd][ycm] (YouCompleteMe) based editor plugins, update your `WORKSPACE` file
+to include new dependency:
 
-You will need to copy aspects.bzl file to an absolute path or a path relative
-to your repo, and hard code the path into the `ASPECTS_BZL` variable in
-.ycm_extra_conf.py script. The default path is
-bazel/compilation_database/aspects.bzl relative to your repo.
+```
+http_archive(
+     name = "bazel_compilation_database",
+     urls = ["https://github.com/grailbio/bazel-compilation-database/archive/master.zip"],
+     strip_prefix = "bazel-compilation-database-master",
+)
+```
+
+Also, add an executable `.ycm_extra_conf.py` at your project root as follows:
+
+```py
+import ast
+import os
+import subprocess
+import sys
+
+
+def BazelInfo(key):
+    return subprocess.check_output(['bazel', 'info', key]).decode('utf-8').strip()
+
+
+def YcmExtraConf():
+    return os.path.join(BazelInfo('bazel-bin'), 'external/bazel_compilation_database/ycm_extra_conf')
+
+
+def FlagsForFile(filename, **kargs):
+    os.chdir(BazelInfo('workspace'))
+
+    if subprocess.call(['bazel', 'build', '@bazel_compilation_database//:ycm_extra_conf']):
+        sys.exit()
+
+    flags = subprocess.check_output([YcmExtraConf(), filename]).decode('utf-8')
+    return ast.literal_eval(flags)
+```
 
 Contributing
 ------------

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+load("@bazel_compilation_database//:aspects.bzl", "compilation_database")
 
 cc_library(
     name = "A",
@@ -23,8 +24,6 @@ cc_library(
     srcs = ["b.cc"],
     deps = [":A"],
 )
-
-load("@compdb//:aspects.bzl", "compilation_database")
 
 compilation_database(
     name = "compdb",

@@ -35,7 +35,7 @@ import xml.etree.ElementTree as ElementTree
 
 # bzl file path for compilation database aspect definitions.
 # Must be an absolute path or relative to the bazel workspace.
-ASPECTS_BZL = "bazel/compilation_database/aspects.bzl"
+ASPECTS_BZL = '@bazel_compilation_database//:aspects.bzl'
 
 def bazel_info():
     """Returns a dict containing key values from bazel info."""
@@ -191,4 +191,5 @@ def FlagsForFile(filename, **kwargs):
 
 # For testing; needs exactly one argument as absolute path of file.
 if __name__ == '__main__':
-    print FlagsForFile(sys.argv[1])
+    filename = os.path.abspath(sys.argv[1])
+    print(FlagsForFile(filename))
