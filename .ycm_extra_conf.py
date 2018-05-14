@@ -33,9 +33,13 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ElementTree
 
-# bzl file path for compilation database aspect definitions.
-# Must be an absolute path or relative to the bazel workspace.
-ASPECTS_BZL = "bazel/compilation_database/aspects.bzl"
+def aspects_bzl(bazel_workspace):
+    """bzl file path for compilation database aspect definitions."""
+
+    # Must be a label or relative to the bazel workspace.
+    return os.path.relpath(
+        os.path.join(os.path.dirname(os.path.realpath(__file__)), "aspects.bzl"),
+        bazel_workspace)
 
 def bazel_info():
     """Returns a dict containing key values from bazel info."""
@@ -176,7 +180,7 @@ def FlagsForFile(filename, **kwargs):
         sys.exit("No cc rules depend on this source file.")
 
     bazel_aspects = ['bazel', 'build',
-                     '--aspects=' + ASPECTS_BZL + '%compilation_database_aspect',
+                     '--aspects=' + aspects_bzl(bazel_workspace) + '%compilation_database_aspect',
                      '--output_groups=compdb_files'] + labels
     subprocess.check_call(bazel_aspects)
     aspects_filepath = get_aspects_filepath(labels[0], bazel_bin)
@@ -189,6 +193,7 @@ def FlagsForFile(filename, **kwargs):
         'include_paths_relative_to_dir': bazel_exec_root,
         }
 
-# For testing; needs exactly one argument as absolute path of file.
+# For testing; needs exactly one argument as path of file.
 if __name__ == '__main__':
-    print FlagsForFile(sys.argv[1])
+    filename = os.path.abspath(sys.argv[1])
+    print FlagsForFile(filename)

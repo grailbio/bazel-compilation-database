@@ -17,7 +17,7 @@ the `generate.sh` script.  This will create a `compile_commands.json` file at
 your workspace root. For example,
 
 ```sh
-RELEASE_VERSION=0.2.2
+RELEASE_VERSION=0.2.3
 curl -L https://github.com/grailbio/bazel-compilation-database/archive/${RELEASE_VERSION}.tar.gz | tar -xz
 bazel-compilation-database-${RELEASE_VERSION}/generate.sh
 ```
@@ -51,10 +51,11 @@ you don't have to maintain a separate compile_commands.json file through a
 script and/or a `compilation_database` target. Compile commands are fetched
 from bazel as the files are opened in your editor.
 
-You will need to copy aspects.bzl file to an absolute path or a path relative
-to your repo, and hard code the path into the `ASPECTS_BZL` variable in
-.ycm_extra_conf.py script. The default path is
-bazel/compilation_database/aspects.bzl relative to your repo.
+Follow the instructions as above for making the files available in this repo
+somewhere in the workspace, and then configure vim to use the
+`.ycm_extra_conf.py` script that you just extracted. One way is to make a
+symlink to the py script from the top of your workspace root. Another way is to
+set the `ycm_global_ycm_extra_conf` variable in vim.
 
 Contributing
 ------------
