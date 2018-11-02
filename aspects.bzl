@@ -22,6 +22,14 @@ An alternative approach is the one used by the kythe project using
 https://github.com/google/kythe/blob/master/tools/cpp/generate_compilation_database.sh
 """
 
+load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
+load(
+    "@bazel_tools//tools/build_defs/cc:action_names.bzl",
+    "CPP_COMPILE_ACTION_NAME",
+    "CPP_LINK_DYNAMIC_LIBRARY_ACTION_NAME",
+    "C_COMPILE_ACTION_NAME",
+)
+
 CompilationAspect = provider()
 
 _cpp_extensions = ["cc", "cpp", "cxx"]
@@ -61,19 +69,34 @@ def _compilation_database_aspect_impl(target, ctx):
         return []
 
     compilation_db = []
-
-    cpp_fragment = ctx.fragments.cpp
-    compiler = str(cpp_fragment.compiler_executable)
-    compile_flags = (cpp_fragment.compiler_options(ctx.features)
-                     + cpp_fragment.c_options
-                     + target.cc.compile_flags
-                     + (ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else [])
-                     + cpp_fragment.unfiltered_compiler_options(ctx.features))
+    
+    cc_toolchain = find_cpp_toolchain(ctx)
+    feature_configuration = cc_common.configure_features(
+        cc_toolchain = cc_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features,
+    )
+    compile_variables = cc_common.create_compile_variables(
+        feature_configuration = feature_configuration,
+        cc_toolchain = cc_toolchain,
+        user_compile_flags = ctx.fragments.cpp.copts,
+    )
+    compiler_options = cc_common.get_memory_inefficient_command_line(
+        feature_configuration = feature_configuration,
+        action_name = C_COMPILE_ACTION_NAME,
+        variables = compile_variables,
+    )
+    compiler = str(
+        cc_common.get_tool_for_action(
+            feature_configuration = feature_configuration,
+            action_name = C_COMPILE_ACTION_NAME,
+        ),
+    )
 
     # system built-in directories (helpful for macOS).
-    if cpp_fragment.libc == "macosx":
+    if cc_toolchain.libc == "macosx":
         compile_flags += ["-isystem " + str(d)
-                          for d in cpp_fragment.built_in_include_directories]
+                          for d in cc_toolchain.built_in_include_directories]
 
     srcs = _sources(target, ctx)
     if not srcs:
@@ -84,9 +107,23 @@ def _compilation_database_aspect_impl(target, ctx):
     # This is useful for compiling .h headers as C++ code.
     force_cpp_mode_option = ""
     if _is_cpp_target(srcs):
-        compile_flags += cpp_fragment.cxx_options(ctx.features)
+        compile_variables = cc_common.create_compile_variables(
+            feature_configuration = feature_configuration,
+            cc_toolchain = cc_toolchain,
+            user_compile_flags = ctx.fragments.cpp.cxxopts +
+                                 ctx.fragments.cpp.copts,
+            add_legacy_cxx_options = True,
+        )
+        compiler_options = cc_common.get_memory_inefficient_command_line(
+            feature_configuration = feature_configuration,
+            action_name = CPP_COMPILE_ACTION_NAME,
+            variables = compile_variables,
+        )
         force_cpp_mode_option = " -x c++"
 
+    compile_flags = (compiler_options +
+                     target.cc.compile_flags +
+                     (ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else []))
     compile_command = compiler + " " + " ".join(compile_flags) + force_cpp_mode_option
 
     for src in srcs:
@@ -120,6 +157,11 @@ compilation_database_aspect = aspect(
     fragments = ["cpp"],
     required_aspect_providers = [CompilationAspect],
     implementation = _compilation_database_aspect_impl,
+    attrs = {
+        "_cc_toolchain": attr.label(
+            default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
+        ),
+    },
 )
 
 
