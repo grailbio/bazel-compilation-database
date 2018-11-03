@@ -93,11 +93,6 @@ def _compilation_database_aspect_impl(target, ctx):
         ),
     )
 
-    # system built-in directories (helpful for macOS).
-    if cc_toolchain.libc == "macosx":
-        compile_flags += ["-isystem " + str(d)
-                          for d in cc_toolchain.built_in_include_directories]
-
     srcs = _sources(target, ctx)
     if not srcs:
         # This should not happen for any of our supported rule kinds.
@@ -124,6 +119,10 @@ def _compilation_database_aspect_impl(target, ctx):
     compile_flags = (compiler_options +
                      target.cc.compile_flags +
                      (ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else []))
+    # system built-in directories (helpful for macOS).
+    if cc_toolchain.libc == "macosx":
+        compile_flags += ["-isystem " + str(d)
+                          for d in cc_toolchain.built_in_include_directories]
     compile_command = compiler + " " + " ".join(compile_flags) + force_cpp_mode_option
 
     for src in srcs:
