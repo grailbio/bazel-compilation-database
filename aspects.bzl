@@ -69,6 +69,7 @@ def _compilation_database_aspect_impl(target, ctx):
         return []
 
     compilation_db = []
+    compile_flags = []
 
     cc_toolchain = find_cpp_toolchain(ctx)
     feature_configuration = cc_common.configure_features(
@@ -118,6 +119,7 @@ def _compilation_database_aspect_impl(target, ctx):
 
     compile_flags = (compiler_options +
                      target.cc.compile_flags +
+                     compile_flags + # to capture the macosx case
                      (ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else []))
     # system built-in directories (helpful for macOS).
     if cc_toolchain.libc == "macosx":
