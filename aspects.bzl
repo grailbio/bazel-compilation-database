@@ -191,6 +191,10 @@ def _compilation_database_impl(ctx):
         ctx.actions.write(output = ctx.outputs.filename, content = "[]\n")
         return
 
+    if ctx.attr.disable:
+        ctx.actions.write(output = ctx.outputs.filename, content = "[]\n")
+        return
+
     compilation_db = depset()
     for target in ctx.attr.targets:
         compilation_db += target[CompilationAspect].compilation_db
@@ -208,6 +212,13 @@ compilation_database = rule(
         "exec_root": attr.string(
             default = "__EXEC_ROOT__",
             doc = "Execution root of Bazel as returned by 'bazel info execution_root'.",
+        ),
+        "disable": attr.bool(
+            default = False,
+            doc = ("Makes this operation a no-op; useful in combination with a 'select' " +
+                   "for platforms where the internals of this rule are not properly " +
+                   "supported. For known unsupported platforms (e.g. Windows), the " +
+                   "rule is always a no-op."),
         ),
     },
     outputs = {
