@@ -34,7 +34,7 @@ readonly QUERY_CMD=(
   bazel query
     --noshow_progress
     --noshow_loading_progress
-    'kind("cc_(library|binary|test|inc_library|proto_library)", //...)'
+    'kind("cc_(library|binary|test|inc_library|proto_library)", //...) union kind("objc_(library|binary|test)", //...)'
 )
 
 # Clean any previously generated files.
@@ -56,6 +56,7 @@ find "${EXEC_ROOT}" -name '*.compile_commands.json' -exec bash -c 'cat "$1" && e
   >> "${COMPDB_FILE}"
 sed -i.bak -e '/^,$/d' -e '$s/,$//' "${COMPDB_FILE}"  # Hygiene to make valid json
 sed -i.bak -e "s|__EXEC_ROOT__|${EXEC_ROOT}|" "${COMPDB_FILE}"  # Replace exec_root marker
+sed -i.bak -e "s|-isysroot __BAZEL_XCODE_SDKROOT__||" "${COMPDB_FILE}"  # Replace -isysroot __BAZEL_XCODE_SDKROOT__ marker
 rm "${COMPDB_FILE}.bak"
 echo "]" >> "${COMPDB_FILE}"
 
