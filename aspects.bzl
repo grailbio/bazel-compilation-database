@@ -182,16 +182,16 @@ def _compilation_database_impl(ctx):
     # Generates a single compile_commands.json file with the
     # transitive depset of specified targets.
 
+    if ctx.attr.disable:
+        ctx.actions.write(output = ctx.outputs.filename, content = "[]\n")
+        return
+
     # We make this rule a no-op on Windows because it is not supported.
     # We use the exposed host path separator as a hack to detect Windows.
     # The ideal solution here would be to use toolchains.
     # https://github.com/bazelbuild/bazel/issues/2045
     if ctx.configuration.host_path_separator != ":":
         print("Windows is not supported in compilation_database rule")
-        ctx.actions.write(output = ctx.outputs.filename, content = "[]\n")
-        return
-
-    if ctx.attr.disable:
         ctx.actions.write(output = ctx.outputs.filename, content = "[]\n")
         return
 
