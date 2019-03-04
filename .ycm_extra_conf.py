@@ -35,13 +35,6 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ElementTree
 
-def aspects_bzl(bazel_workspace):
-    """bzl file path for compilation database aspect definitions."""
-
-    # Must be a label or relative to the bazel workspace.
-    return os.path.relpath(
-        os.path.join(os.path.dirname(os.path.realpath(__file__)), "aspects.bzl"),
-        bazel_workspace)
 
 def bazel_info():
     """Returns a dict containing key values from bazel info."""
@@ -181,9 +174,17 @@ def FlagsForFile(filename, **kwargs):
     if not labels:
         sys.exit("No cc rules depend on this source file.")
 
-    bazel_aspects = ['bazel', 'build',
-                     '--aspects=' + aspects_bzl(bazel_workspace) + '%compilation_database_aspect',
-                     '--output_groups=compdb_files'] + labels
+    repository_override = '--override_repository=bazel_compdb=' + os.path.dirname(
+        os.path.abspath(__file__))
+    aspect_definition = '--aspects=@bazel_compdb//:aspects.bzl%compilation_database_aspect'
+
+    bazel_aspects = [
+        'bazel',
+        'build',
+        aspect_definition,
+        repository_override,
+        '--output_groups=compdb_files',
+    ] + labels
     subprocess.check_call(bazel_aspects)
     aspects_filepath = get_aspects_filepath(labels[0], bazel_bin)
 
