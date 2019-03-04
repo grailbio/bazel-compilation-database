@@ -57,6 +57,15 @@ somewhere in the workspace, and then configure vim to use the
 symlink to the py script from the top of your workspace root. Another way is to
 set the `ycm_global_ycm_extra_conf` variable in vim.
 
+vim-plugin
+---------
+To include everything as a vim plugin you can install this repo with your favourite
+plugin manager. It sets `g:ycm_global_ycm_extra_conf` and instruments bazel with the correct paths.
+e.g. Plugged
+```
+PlugInstall grailbio/bazel-compilation-database
+```
+
 Contributing
 ------------
 
