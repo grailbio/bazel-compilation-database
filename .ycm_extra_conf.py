@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 # Copyright 2018 GRAIL, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -196,4 +198,4 @@ def FlagsForFile(filename, **kwargs):
 # For testing; needs exactly one argument as path of file.
 if __name__ == '__main__':
     filename = os.path.abspath(sys.argv[1])
-    print FlagsForFile(filename)
+    print(FlagsForFile(filename))
