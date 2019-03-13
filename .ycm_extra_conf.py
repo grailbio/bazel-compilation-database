@@ -40,7 +40,13 @@ def bazel_info():
     """Returns a dict containing key values from bazel info."""
 
     bazel_info_dict = dict()
-    out = subprocess.check_output(['bazel', 'info']).decode('utf-8').strip().split('\n')
+    try:
+        out = subprocess.check_output(['bazel', 'info']).decode('utf-8').strip().split('\n')
+    except subprocess.CalledProcessError as err:
+        # This exit code is returned when this command is run outside of a bazel workspace.
+        if err.returncode == 2:
+            sys.exit(0)
+
     for line in out:
         key_val = line.strip().partition(": ")
         bazel_info_dict[key_val[0]] = key_val[2]
@@ -175,7 +181,8 @@ def FlagsForFile(filename, **kwargs):
         sys.exit("No cc rules depend on this source file.")
 
     repository_override = '--override_repository=bazel_compdb=' + os.path.dirname(
-        os.path.abspath(__file__))
+        os.path.realpath(__file__))
+
     aspect_definition = '--aspects=@bazel_compdb//:aspects.bzl%compilation_database_aspect'
 
     bazel_aspects = [
