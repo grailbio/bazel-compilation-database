@@ -35,19 +35,18 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ElementTree
 
-def aspects_bzl(bazel_workspace):
-    """bzl file path for compilation database aspect definitions."""
-
-    # Must be a label or relative to the bazel workspace.
-    return os.path.relpath(
-        os.path.join(os.path.dirname(os.path.realpath(__file__)), "aspects.bzl"),
-        bazel_workspace)
 
 def bazel_info():
     """Returns a dict containing key values from bazel info."""
 
     bazel_info_dict = dict()
-    out = subprocess.check_output(['bazel', 'info']).decode('utf-8').strip().split('\n')
+    try:
+        out = subprocess.check_output(['bazel', 'info']).decode('utf-8').strip().split('\n')
+    except subprocess.CalledProcessError as err:
+        # This exit code is returned when this command is run outside of a bazel workspace.
+        if err.returncode == 2:
+            sys.exit(0)
+
     for line in out:
         key_val = line.strip().partition(": ")
         bazel_info_dict[key_val[0]] = key_val[2]
@@ -181,9 +180,18 @@ def FlagsForFile(filename, **kwargs):
     if not labels:
         sys.exit("No cc rules depend on this source file.")
 
-    bazel_aspects = ['bazel', 'build',
-                     '--aspects=' + aspects_bzl(bazel_workspace) + '%compilation_database_aspect',
-                     '--output_groups=compdb_files'] + labels
+    repository_override = '--override_repository=bazel_compdb=' + os.path.dirname(
+        os.path.realpath(__file__))
+
+    aspect_definition = '--aspects=@bazel_compdb//:aspects.bzl%compilation_database_aspect'
+
+    bazel_aspects = [
+        'bazel',
+        'build',
+        aspect_definition,
+        repository_override,
+        '--output_groups=compdb_files',
+    ] + labels
     subprocess.check_call(bazel_aspects)
     aspects_filepath = get_aspects_filepath(labels[0], bazel_bin)
 
