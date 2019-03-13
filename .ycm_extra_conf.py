@@ -25,6 +25,8 @@ For Option 2 (.ycm_extra_conf.py), symlink this file to the root of your
 workspace and bazel's output_base, or set it as your global config.
 """
 
+from __future__ import print_function
+
 import json
 import os
 import re
@@ -196,4 +198,4 @@ def FlagsForFile(filename, **kwargs):
 # For testing; needs exactly one argument as path of file.
 if __name__ == '__main__':
     filename = os.path.abspath(sys.argv[1])
-    print FlagsForFile(filename)
+    print(FlagsForFile(filename))
