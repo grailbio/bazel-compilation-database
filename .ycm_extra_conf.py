@@ -1,7 +1,5 @@
 #!/usr/bin/python
 
-from __future__ import print_function
-
 # Copyright 2018 GRAIL, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +24,8 @@ repository.
 For Option 2 (.ycm_extra_conf.py), symlink this file to the root of your
 workspace and bazel's output_base, or set it as your global config.
 """
+
+from __future__ import print_function
 
 import json
 import os
