@@ -58,7 +58,8 @@ def bazel_query(args):
 
     # TODO: switch to cquery when it supports siblings and less crash-y with external repos.
     query_cmd = ['bazel', 'query'] + args
-    return subprocess.check_output(query_cmd).decode('utf-8').strip()
+    proc = subprocess.Popen(query_cmd, stdout=subprocess.PIPE)
+    return proc.communicate()[0].decode('utf-8')
 
 def file_to_target(filepath):
     """Returns a string that works as a bazel target specification for the given file."""
@@ -173,7 +174,7 @@ def FlagsForFile(filename, **kwargs):
 
     cc_rules = "cc_(library|binary|test|inc_library|proto_library)"
     query_result = bazel_query([('kind("{cc_rules}", rdeps(siblings({f}), {f}, 1))'
-                                 .format(f=file_target, cc_rules=cc_rules))])
+                                 .format(f=file_target, cc_rules=cc_rules)), '--keep_going'])
 
     labels = [label.partition(" ")[0] for label in query_result.split('\n') if label]
 
