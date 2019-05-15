@@ -63,6 +63,30 @@ def _sources(target, ctx):
 
     return srcs
 
+# Function copied from https://gist.github.com/oquenchil/7e2c2bd761aa1341b458cc25608da50c
+def get_compile_flags(dep):
+    options = []
+    compilation_context = dep[CcInfo].compilation_context
+    for define in compilation_context.defines.to_list():
+        options.append("-D{}".format(define))
+
+    for system_include in compilation_context.system_includes.to_list():
+        if len(system_include) == 0:
+            system_include = "."
+        options.append("-isystem {}".format(system_include))
+
+    for include in compilation_context.includes.to_list():
+        if len(include) == 0:
+            include = "."
+        options.append("-I {}".format(include))
+
+    for quote_include in compilation_context.quote_includes.to_list():
+        if len(quote_include) == 0:
+            quote_include = "."
+        options.append("-iquote {}".format(quote_include))
+
+    return options
+
 def _compilation_database_aspect_impl(target, ctx):
     # Write the compile commands for this target to a file, and return
     # the commands for the transitive closure.
@@ -126,7 +150,7 @@ def _compilation_database_aspect_impl(target, ctx):
         force_cpp_mode_option = " -x c++"
 
     compile_flags = (compiler_options +
-                     target.cc.compile_flags +
+                     get_compile_flags(target) +
                      (ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else []))
 
     # system built-in directories (helpful for macOS).
