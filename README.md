@@ -56,9 +56,9 @@ The easiest way to set up this project for use by YouCompleteMe is to install
 this project as a vim plugin with your favourite plugin manager.  The plugin
 will sets `g:ycm_global_ycm_extra_conf` and instruments bazel with the correct
 paths.
-e.g. Plugged
+e.g. Using Plugged add the following to your vimrc.
 ```
-PlugInstall grailbio/bazel-compilation-database
+Plug 'grailbio/bazel-compilation-database'
 ```
 
 An alternative approach is to follow the instructions as above for making the
