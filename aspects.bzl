@@ -177,13 +177,16 @@ def _compilation_database_aspect_impl(target, ctx):
     )
 
     # Collect all transitive dependencies.
-    compilation_db = depset(compilation_db)
-    all_compdb_files = depset([compdb_file])
+    transitive_compilation_db = []
+    all_compdb_files = []
     for dep in ctx.rule.attr.deps:
         if CompilationAspect not in dep:
             continue
-        compilation_db += dep[CompilationAspect].compilation_db
-        all_compdb_files += dep[OutputGroupInfo].compdb_files
+        transitive_compilation_db.append(dep[CompilationAspect].compilation_db)
+        all_compdb_files.append(dep[OutputGroupInfo].compdb_files)
+
+    compilation_db = depset(compilation_db, transitive = transitive_compilation_db)
+    all_compdb_files = depset([compdb_file], transitive = all_compdb_files)
 
     return [
         CompilationAspect(compilation_db = compilation_db),
@@ -219,9 +222,11 @@ def _compilation_database_impl(ctx):
         ctx.actions.write(output = ctx.outputs.filename, content = "[]\n")
         return
 
-    compilation_db = depset()
+    compilation_db = []
     for target in ctx.attr.targets:
-        compilation_db += target[CompilationAspect].compilation_db
+        compilation_db.append(target[CompilationAspect].compilation_db)
+
+    compilation_db = depset(transitive = compilation_db)
 
     content = "[\n" + _compilation_db_json(compilation_db) + "\n]\n"
     content = content.replace("__EXEC_ROOT__", ctx.attr.exec_root)
