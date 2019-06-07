@@ -92,6 +92,9 @@ def standardize_file_target(file_target):
     """
 
     query_result = bazel_query(['--output=xml', file_target])
+    if not query_result:
+        sys.exit("Empty query response for {}. It is probably not handled by bazel".format(file_target))
+
     target_xml = ElementTree.fromstringlist(query_result.split('\n'))
     source_element = target_xml.find('source-file')
     if source_element is not None:
@@ -193,7 +196,16 @@ def FlagsForFile(filename, **kwargs):
         repository_override,
         '--output_groups=compdb_files',
     ] + labels
-    subprocess.check_call(bazel_aspects)
+    proc = subprocess.Popen(bazel_aspects, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    if proc.returncode != 0:
+        errors = [e for e in out.splitlines() + err.splitlines()
+                  if e.startswith("ERROR:")]
+        if errors:
+            raise Exception('/'.join(errors))
+        else:
+            raise Exception(err)
+
     aspects_filepath = get_aspects_filepath(labels[0], bazel_bin)
 
     compdb_json = get_compdb_json(aspects_filepath, bazel_exec_root)

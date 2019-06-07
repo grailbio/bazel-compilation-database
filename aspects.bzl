@@ -45,11 +45,7 @@ def _compilation_db_json(compilation_db):
     return ",\n ".join(entries)
 
 def _is_cpp_target(srcs):
-    for src in srcs:
-        for extension in _cpp_extensions:
-            if src.extension == extension:
-                return True
-    return False
+    return any([src.extension in _cpp_extensions for src in srcs])
 
 def _sources(target, ctx):
     srcs = []
