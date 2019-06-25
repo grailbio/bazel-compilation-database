@@ -7,7 +7,12 @@ addons:
       key_url: 'https://bazel.build/bazel-release.pub.gpg'
     packages:
     - bazel
-    - libstdc++6
+    - g++
+    - pkg-config
+    - python3
+    - unzip
+    - zip
+    - zlib1g-dev
 
 script:
   - tests/run_tests.sh
