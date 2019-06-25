@@ -1,4 +1,5 @@
 sudo: false  # Not needing sudo enables container builds.
+dist: xenial
 
 addons:
   apt:
