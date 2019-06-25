@@ -78,7 +78,7 @@ def _sources(target, ctx):
         srcs += [f for src in ctx.rule.attr.hdrs for f in src.files.to_list()]
 
     if ctx.rule.kind == "cc_proto_library":
-        srcs += [f for f in target.files if f.extension in ["h", "cc"]]
+        srcs += [f for f in target.files.to_list() if f.extension in ["h", "cc"]]
 
     return srcs
 
