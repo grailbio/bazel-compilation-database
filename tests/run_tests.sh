@@ -5,8 +5,6 @@ set -exuo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 bazel version
-ls /usr/bin
-
 bazel build :compdb
 diff expected_file.json bazel-bin/compile_commands.json
 
