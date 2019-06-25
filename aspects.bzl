@@ -73,9 +73,9 @@ def _is_objcpp_target(srcs):
 def _sources(target, ctx):
     srcs = []
     if "srcs" in dir(ctx.rule.attr):
-        srcs += [f for src in ctx.rule.attr.srcs for f in src.files]
+        srcs += [f for src in ctx.rule.attr.srcs for f in src.files.to_list()]
     if "hdrs" in dir(ctx.rule.attr):
-        srcs += [f for src in ctx.rule.attr.hdrs for f in src.files]
+        srcs += [f for src in ctx.rule.attr.hdrs for f in src.files.to_list()]
 
     if ctx.rule.kind == "cc_proto_library":
         srcs += [f for f in target.files if f.extension in ["h", "cc"]]
@@ -347,7 +347,7 @@ def _compilation_database_impl(ctx):
 
     compilation_db = depset(transitive = compilation_db)
 
-    content = "[\n" + _compilation_db_json(compilation_db) + "\n]\n"
+    content = "[\n" + _compilation_db_json(compilation_db.to_list()) + "\n]\n"
     content = content.replace("__EXEC_ROOT__", ctx.attr.exec_root)
     content = content.replace("-isysroot __BAZEL_XCODE_SDKROOT__", "")
     ctx.actions.write(output = ctx.outputs.filename, content = content)
