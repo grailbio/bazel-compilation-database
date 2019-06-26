@@ -321,6 +321,7 @@ compilation_database_aspect = aspect(
     },
     fragments = ["cpp", "objc", "apple"],
     required_aspect_providers = [CompilationAspect],
+    toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
     implementation = _compilation_database_aspect_impl,
 )
 
