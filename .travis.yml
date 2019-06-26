@@ -1,13 +1,5 @@
 sudo: false  # Not needing sudo enables container builds.
 dist: xenial
 
-addons:
-  apt:
-    sources:
-    - sourceline: 'deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8'
-      key_url: 'https://bazel.build/bazel-release.pub.gpg'
-    packages:
-    - bazel
-
 script:
   - tests/run_tests.sh
