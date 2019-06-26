@@ -17,7 +17,7 @@ the `generate.sh` script.  This will create a `compile_commands.json` file at
 your workspace root. For example,
 
 ```sh
-RELEASE_VERSION=0.3.4
+RELEASE_VERSION=0.3.5
 curl -L https://github.com/grailbio/bazel-compilation-database/archive/${RELEASE_VERSION}.tar.gz | tar -xz
 bazel-compilation-database-${RELEASE_VERSION}/generate.sh
 ```
