@@ -270,13 +270,10 @@ def _compilation_database_aspect_impl(target, ctx):
         compiler_info = _objc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain)
 
     compile_flags = compiler_info.compile_flags
-
-    # system built-in directories (helpful for macOS).
-    if cc_toolchain.libc == "macosx":
-        compile_flags += [
-            "-isystem " + str(d)
-            for d in cc_toolchain.built_in_include_directories
-        ]
+    compile_flags += [
+        "-isystem " + str(d)
+        for d in cc_toolchain.built_in_include_directories
+    ]
     compile_command = compiler_info.compiler + " " + " ".join(compile_flags) + compiler_info.force_language_mode_option
 
     for src in srcs:
