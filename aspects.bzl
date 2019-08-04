@@ -272,7 +272,7 @@ def _compilation_database_aspect_impl(target, ctx):
     compile_flags = compiler_info.compile_flags
 
     # system built-in directories (helpful for macOS).
-    if cc_toolchain.libc == "macosx" | cc_toolchain.libc == "local":
+    if cc_toolchain.libc == "macosx" or cc_toolchain.libc == "local":
         compile_flags += [
             "-isystem " + str(d)
             for d in cc_toolchain.built_in_include_directories
