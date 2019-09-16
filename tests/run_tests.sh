@@ -18,8 +18,12 @@ export PATH="${bin_dir}:${PATH}"
 curl -L -sSf -o "${bazel}" "${url}"
 chmod a+x "${bazel}"
 
-"${bazel}" --migrate build :compdb
+"${bazel}" build :compdb
 
 diff expected_file.json bazel-bin/compile_commands.json
 
-diff expected_ycm_output.json <(python ../.ycm_extra_conf.py a.cc)
+diff \
+  <(sed -e "s@EXECROOT@$(bazel info execution_root)@" -e "s@PWD@${PWD}@" expected_ycm_output.json) \
+  <(python ../.ycm_extra_conf.py a.cc)
+
+"${bazel}" --migrate build :compdb
