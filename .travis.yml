@@ -3,3 +3,4 @@ dist: xenial
 
 script:
   - tests/run_tests.sh
+  - tests/check_migration.sh
