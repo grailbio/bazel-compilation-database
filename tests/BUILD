@@ -24,6 +24,11 @@ cc_library(
     deps = [":A"],
 )
 
+cc_binary(
+    name = "stdlib",
+    srcs = ["stdlib.cc"],
+)
+
 load("@compdb//:aspects.bzl", "compilation_database")
 
 compilation_database(
