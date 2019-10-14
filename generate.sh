@@ -23,12 +23,11 @@
 set -e
 
 readonly ASPECTS_DIR="$(dirname "$0")"
-readonly ASPECTS_FILE="${ASPECTS_DIR/#.\/}/aspects.bzl"
 readonly OUTPUT_GROUPS="compdb_files"
 
 readonly WORKSPACE="$(bazel info workspace)"
 readonly EXEC_ROOT="$(bazel info execution_root)"
-readonly COMPDB_FILE="${ASPECTS_DIR}/compile_commands.json"
+readonly COMPDB_FILE="${WORKSPACE}/compile_commands.json"
 
 readonly QUERY_CMD=(
   bazel query
@@ -44,10 +43,11 @@ fi
 
 # shellcheck disable=SC2046
 bazel build \
-  --aspects="${ASPECTS_FILE}"%compilation_database_aspect \
-  --noshow_progress \
-  --noshow_loading_progress \
-  --output_groups="${OUTPUT_GROUPS}" \
+  "--override_repository=bazel_compdb=${ASPECTS_DIR}" \
+  "--aspects=@bazel_compdb//:aspects.bzl%compilation_database_aspect" \
+  "--noshow_progress" \
+  "--noshow_loading_progress" \
+  "--output_groups=${OUTPUT_GROUPS}" \
   "$@" \
   $("${QUERY_CMD[@]}") > /dev/null
 
@@ -60,8 +60,6 @@ sed -i.bak -e "s|-isysroot __BAZEL_XCODE_SDKROOT__||" "${COMPDB_FILE}"  # Replac
 rm "${COMPDB_FILE}.bak"
 echo "]" >> "${COMPDB_FILE}"
 
-ln -f -s "${PWD}/${COMPDB_FILE}" "${WORKSPACE}/"
-
 # This is for YCM to help find the DB when following generated files.
 # The file may be deleted by bazel on the next build.
-ln -f -s "${PWD}/${COMPDB_FILE}" "${EXEC_ROOT}/"
+ln -f -s "${WORKSPACE}/${COMPDB_FILE}" "${EXEC_ROOT}/"

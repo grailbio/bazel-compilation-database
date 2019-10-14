@@ -9,27 +9,48 @@ your source code does not compile, and the generation process is much faster.
 For more information on compilation database, [Guillaume Papin][sarcasm] has an
 [excellent article][compdb2].
 
-How to Use
-----------
+## How to Use
 
-Make the files in this github repo available somewhere in your repo, and run
-the `generate.sh` script.  This will create a `compile_commands.json` file at
-your workspace root. For example,
+### Entire repo
 
+Running generate.sh script from this project with current directory somewhere
+in your bazel workspace will generate a compile_commands.json file in the
+top-level directory of your workspace.
+
+For example,
 ```sh
-RELEASE_VERSION=0.3.5
-curl -L https://github.com/grailbio/bazel-compilation-database/archive/${RELEASE_VERSION}.tar.gz | tar -xz
-bazel-compilation-database-${RELEASE_VERSION}/generate.sh
+DOWNLOAD_DIR="/tmp"
+VERSION="3.6"
+(cd "${DOWNLOAD_DIR}" && curl -L "https://github.com/grailbio/bazel-compilation-database/archive/${VERSION}.tar.gz" | tar -xz)
+ln -s "${DOWNLOAD_DIR}/bazel-compilation-database-${VERSION}/generate.sh" /usr/local/bin/bazel-compdb
+
+bazel-compdb
 ```
 
-An alternative to running the `generate.sh` script is to define a target of
-rule type `compilation_database` with the attribute `targets` as a list of
-top-level `cc_.*` labels which you want to include in your compilation database. 
+### Selected targets
+
+You can define a target of rule type `compilation_database` with the attribute
+`targets` as a list of top-level `cc_.*` labels which you want to include in
+your compilation database. You do not need to include targets that are
+dependencies of your top-level targets. So these will mostly be targets of type
+`cc_binary` and `cc_test`.
+
 For example,
 
+In your WORKSPACE file:
+```python
+# Change master to the git tag you want.
+http_archive(
+    name = "com_grail_bazel_compdb",
+    strip_prefix = "bazel-compilation-database-master",
+    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/master.tar.gz"],
+)
+```
+
+In your BUILD file:
 ```python
 ## Replace workspace_name and dir_path as per your setup.
-load("@workspace_name//dir_path:aspects.bzl", "compilation_database")
+load("@com_grail_bazel_compdb//:aspects.bzl", "compilation_database")
 
 compilation_database(
     name = "example_compdb",
@@ -42,8 +63,7 @@ compilation_database(
 )
 ```
 
-ycmd
-----
+### YouCompleteMe
 
 If you want to use this project solely for semantic auto completion using
 [ycmd][ycm] (YouCompleteMe) based editor plugins, then the easiest approach
@@ -66,22 +86,19 @@ compile_commands.json file through a script and/or a `compilation_database`
 target. Compile commands are fetched from bazel as the files are opened in your
 editor.
 
-Contributing
-------------
+## Contributing
 
 Contributions are most welcome. Please submit a pull request giving the owners
 of this github repo access to your branch for minor style related edits, etc.
 
-Known Issues
-------------
+## Known Issues
 
 Please check open issues at the github repo.
 
 We have tested only for C and C++ code, and with tools like
 [YouCompleteMe][ycm], [rtags][rtags], and the [woboq code browser][woboq].
 
-Alternatives
-------------
+## Alternatives
 
 1. [Kythe][kythe]: uses Bazel action listeners
 1. [Bear][bear]: uses build intercept hooks
