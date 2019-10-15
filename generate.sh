@@ -22,7 +22,7 @@
 
 set -e
 
-readonly ASPECTS_DIR="$(dirname "$(readlink "${BASH_SOURCE[0]}")")"
+readonly ASPECTS_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 readonly OUTPUT_GROUPS="compdb_files"
 
 readonly WORKSPACE="$(bazel info workspace)"
