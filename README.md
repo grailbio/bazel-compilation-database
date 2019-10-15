@@ -21,7 +21,7 @@ somewhere in your PATH.
 For example,
 ```sh
 DOWNLOAD_DIR="/tmp"
-VERSION="0.3.6"
+VERSION="0.4.0"
 (cd "${DOWNLOAD_DIR}" && curl -L "https://github.com/grailbio/bazel-compilation-database/archive/${VERSION}.tar.gz" | tar -xz)
 ln -s "${DOWNLOAD_DIR}/bazel-compilation-database-${VERSION}/generate.sh" /usr/local/bin/bazel-compdb
 
