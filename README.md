@@ -15,16 +15,17 @@ For more information on compilation database, [Guillaume Papin][sarcasm] has an
 
 Running generate.sh script from this project with current directory somewhere
 in your bazel workspace will generate a compile_commands.json file in the
-top-level directory of your workspace.
+top-level directory of your workspace. You can even symlink the script to
+somewhere in your PATH.
 
 For example,
 ```sh
 DOWNLOAD_DIR="/tmp"
-VERSION="3.6"
+VERSION="0.3.6"
 (cd "${DOWNLOAD_DIR}" && curl -L "https://github.com/grailbio/bazel-compilation-database/archive/${VERSION}.tar.gz" | tar -xz)
 ln -s "${DOWNLOAD_DIR}/bazel-compilation-database-${VERSION}/generate.sh" /usr/local/bin/bazel-compdb
 
-bazel-compdb
+bazel-compdb # This will generate compile_commands.json in your workspace root.
 ```
 
 ### Selected targets
