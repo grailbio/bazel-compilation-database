@@ -259,8 +259,6 @@ def _compilation_database_aspect_impl(target, ctx):
     )
 
     srcs = _sources(target, ctx)
-    if not srcs:
-        return []
 
     compiler_info = None
 
