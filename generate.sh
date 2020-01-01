@@ -63,7 +63,7 @@ function get_realpath() {
 	fi
 }
 
-readonly ASPECTS_DIR="$(dirname "$(get_realpath "${BASH_SOURCE[0]}")")"
+readonly ASPECTS_DIR="$(readlink -f "$(dirname "$(get_realpath "${BASH_SOURCE[0]}")")")"
 readonly OUTPUT_GROUPS="compdb_files"
 
 readonly WORKSPACE="$(bazel info workspace)"
