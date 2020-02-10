@@ -150,7 +150,7 @@ def standardize_flags(flags, bazel_workspace):
     return flags
 
 #pylint: disable=W0613,C0103
-def FlagsForFile(filename, **kwargs):
+def Settings(filename, **kwargs):
     """Function that is called by YCM expecting a dict with at least a 'flags'
     key that points to an array of strings as flags.
     """
@@ -219,4 +219,4 @@ def FlagsForFile(filename, **kwargs):
 # For testing; needs exactly one argument as path of file.
 if __name__ == '__main__':
     filename = os.path.abspath(sys.argv[1])
-    print(FlagsForFile(filename))
+    print(Settings(filename))
