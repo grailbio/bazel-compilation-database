@@ -149,10 +149,9 @@ def standardize_flags(flags, bazel_workspace):
 
     return flags
 
-#pylint: disable=W0613,C0103
-def cfamily_settings(filename, **kwargs):
-    """C-family settings as a dict with at least a 'flags' key that points to
-    an array of strings as flags.
+def cfamily_settings(filename):
+    """Returns C-family settings as a dict with at least a 'flags' key that
+    points to an array of strings as flags.
     """
 
     bazel_info_dict = bazel_info()
@@ -216,15 +215,16 @@ def cfamily_settings(filename, **kwargs):
         'include_paths_relative_to_dir': bazel_exec_root,
         }
 
+#pylint: disable=C0103
 def Settings(**kwargs):
     """Function that is called by YCM with language and filename arguments,
     and expects a dict of language-specific settings.
     """
     if kwargs['language'] == 'cfamily':
-        cfamily_settings(kwargs['filename'], **kwargs)
+        return cfamily_settings(kwargs['filename'])
     return {}
 
 # For testing; needs exactly one argument as path of file.
 if __name__ == '__main__':
     filename = os.path.abspath(sys.argv[1])
-    print(cfamily_settings(filename))
+    print(Settings(language='cfamily', filename=filename))
