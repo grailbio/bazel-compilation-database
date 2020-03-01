@@ -22,6 +22,22 @@
 
 set -e
 
+source_dir=0
+
+usage() {
+  printf "usage: %s flags\nwhere flags can be:\n" "${BASH_SOURCE[0]}"
+  printf "\t-s\tuse the original source directory instead of bazel execroot\n"
+  printf "\n"
+}
+
+while getopts "sh" opt; do
+  case "${opt}" in
+    "s") source_dir=1 ;;
+    "h") usage; exit 0;;
+    *) >&2 echo "invalid option ${opt}"; exit 1;;
+  esac
+done
+
 # This function is copied from https://source.bazel.build/bazel/+/master:scripts/packages/bazel.sh.
 # `readlink -f` that works on OSX too.
 function get_realpath() {
@@ -95,12 +111,20 @@ bazel build \
 echo "[" > "${COMPDB_FILE}"
 find "${EXEC_ROOT}" -name '*.compile_commands.json' -exec bash -c 'cat "$1" && echo ,' _ {} \; \
   >> "${COMPDB_FILE}"
-sed -i.bak -e '/^,$/d' -e '$s/,$//' "${COMPDB_FILE}"  # Hygiene to make valid json
-sed -i.bak -e "s|__EXEC_ROOT__|${EXEC_ROOT}|" "${COMPDB_FILE}"  # Replace exec_root marker
-sed -i.bak -e "s|-isysroot __BAZEL_XCODE_SDKROOT__||" "${COMPDB_FILE}"  # Replace -isysroot __BAZEL_XCODE_SDKROOT__ marker
-rm "${COMPDB_FILE}.bak"
 echo "]" >> "${COMPDB_FILE}"
 
-# This is for YCM to help find the DB when following generated files.
-# The file may be deleted by bazel on the next build.
-ln -f -s "${WORKSPACE}/${COMPDB_FILE}" "${EXEC_ROOT}/"
+sed -i.bak -e '/^,$/d' -e '$s/,$//' "${COMPDB_FILE}"  # Hygiene to make valid json
+if (( source_dir )); then
+  sed -i.bak -e "s|__EXEC_ROOT__|${WORKSPACE}|" "${COMPDB_FILE}"  # Replace exec_root marker
+  # This is for libclang to help find source files from external repositories.
+  ln -f -s "${EXEC_ROOT}/external" "${WORKSPACE}/external"
+else
+  sed -i.bak -e "s|__EXEC_ROOT__|${EXEC_ROOT}|" "${COMPDB_FILE}"  # Replace exec_root marker
+  # This is for YCM to help find the DB when following generated files.
+  # The file may be deleted by bazel on the next build.
+  ln -f -s "${WORKSPACE}/${COMPDB_FILE}" "${EXEC_ROOT}/"
+fi
+sed -i.bak -e "s|-isysroot __BAZEL_XCODE_SDKROOT__||" "${COMPDB_FILE}"  # Replace -isysroot __BAZEL_XCODE_SDKROOT__ marker
+
+# Clean up backup file left behind by sed.
+rm "${COMPDB_FILE}.bak"
