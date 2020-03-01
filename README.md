@@ -21,7 +21,7 @@ somewhere in your PATH.
 For example,
 ```sh
 INSTALL_DIR="/usr/local/bin"
-VERSION="0.4.2"
+VERSION="0.4.3"
 
 # Download and symlink.
 (
