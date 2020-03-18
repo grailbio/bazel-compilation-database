@@ -17,7 +17,7 @@
 """Configuration file for YouCompleteMe to fetch C++ compilation flags from
 Bazel.
 
-See https://valloric.github.io/YouCompleteMe/#c-family-semantic-completion for
+See https://github.com/ycm-core/YouCompleteMe#c-family-semantic-completion for
 how YCM works. In that section:
 For Option 1 (compilation database), use the generate.sh script in this
 repository.
