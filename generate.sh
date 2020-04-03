@@ -113,7 +113,15 @@ find "${EXEC_ROOT}" -name '*.compile_commands.json' -exec bash -c 'cat "$1" && e
   >> "${COMPDB_FILE}"
 echo "]" >> "${COMPDB_FILE}"
 
-sed -i.bak -e '/^,$/d' -e '$s/,$//' "${COMPDB_FILE}"  # Hygiene to make valid json
+# Hygiene to make valid json
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	echo "asfsadfasdf"
+	sed -i.bak -e x -e '$ {s/,$//;p;x;}' -e 1d "${COMPDB_FILE}"  
+else
+	echo "wtf"
+	sed -i.bak -e '/^,$/d' -e '$s/,$//' "${COMPDB_FILE}"  
+fi
+
 if (( source_dir )); then
   sed -i.bak -e "s|__EXEC_ROOT__|${WORKSPACE}|" "${COMPDB_FILE}"  # Replace exec_root marker
   # This is for libclang to help find source files from external repositories.
