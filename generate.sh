@@ -113,7 +113,10 @@ find "${EXEC_ROOT}" -name '*.compile_commands.json' -exec bash -c 'cat "$1" && e
   >> "${COMPDB_FILE}"
 echo "]" >> "${COMPDB_FILE}"
 
-sed -i.bak -e '/^,$/d' -e '$s/,$//' "${COMPDB_FILE}"  # Hygiene to make valid json
+# Remove the last occurence of a comma from the output file.
+# This is necessary to produce valid JSON
+sed -i.bak -e x -e '$ {s/,$//;p;x;}' -e 1d "${COMPDB_FILE}"
+
 if (( source_dir )); then
   sed -i.bak -e "s|__EXEC_ROOT__|${WORKSPACE}|" "${COMPDB_FILE}"  # Replace exec_root marker
   # This is for libclang to help find source files from external repositories.
