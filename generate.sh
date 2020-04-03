@@ -115,10 +115,8 @@ echo "]" >> "${COMPDB_FILE}"
 
 # Hygiene to make valid json
 if [[ "$OSTYPE" == "darwin"* ]]; then
-	echo "asfsadfasdf"
 	sed -i.bak -e x -e '$ {s/,$//;p;x;}' -e 1d "${COMPDB_FILE}"  
 else
-	echo "wtf"
 	sed -i.bak -e '/^,$/d' -e '$s/,$//' "${COMPDB_FILE}"  
 fi
 
