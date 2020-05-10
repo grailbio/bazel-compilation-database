@@ -200,13 +200,13 @@ def _objc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain):
         ),
     )
 
-    defines = ["-D{}".format(val) for val in target.objc.define]
-    includes = ["-I{}".format(val) for val in target.objc.include]
-    system_includes = ["-isystem {}".format(val) for val in target.objc.include_system]
-    iquotes = ["-iquote {}".format(val) for val in target.objc.iquote]
-    frameworks = (["-F {}/..".format(val) for val in target.objc.framework_dir] +
-                  ["-F {}/..".format(val) for val in target.objc.dynamic_framework_dir] +
-                  ["-F {}/..".format(val) for val in target.objc.framework_search_path_only])
+    defines = ["-D{}".format(val) for val in target.objc.define.to_list()]
+    includes = ["-I{}".format(val) for val in target.objc.include.to_list()]
+    system_includes = ["-isystem {}".format(val) for val in target.objc.include_system.to_list()]
+    iquotes = ["-iquote {}".format(val) for val in target.objc.iquote.to_list()]
+    frameworks = (["-F {}/..".format(val) for val in target.objc.static_framework_paths.to_list()] +
+                  ["-F {}/..".format(val) for val in target.objc.dynamic_framework_paths.to_list()] +
+                  ["-F {}/..".format(val) for val in target.objc.framework_search_path_only.to_list()])
 
     xcode_config = ctx.attr._xcode_config[apple_common.XcodeVersionConfig]
 
