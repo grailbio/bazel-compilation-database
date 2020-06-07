@@ -81,13 +81,14 @@ function get_realpath() {
 
 readonly ASPECTS_DIR="$(dirname "$(get_realpath "${BASH_SOURCE[0]}")")"
 readonly OUTPUT_GROUPS="compdb_files"
+readonly BAZEL="${BAZEL_COMPDB_BAZEL_PATH:-bazel}"
 
-readonly WORKSPACE="$(bazel info workspace)"
-readonly EXEC_ROOT="$(bazel info execution_root)"
+readonly WORKSPACE="$("$BAZEL" info workspace)"
+readonly EXEC_ROOT="$("$BAZEL" info execution_root)"
 readonly COMPDB_FILE="${WORKSPACE}/compile_commands.json"
 
 readonly QUERY_CMD=(
-  bazel query
+  "$BAZEL" query
     --noshow_progress
     --noshow_loading_progress
     'kind("cc_(library|binary|test|inc_library|proto_library)", //...) union kind("objc_(library|binary|test)", //...)'
@@ -99,7 +100,7 @@ if [[ -e "${EXEC_ROOT}" ]]; then
 fi
 
 # shellcheck disable=SC2046
-bazel build \
+"$BAZEL" build \
   "--override_repository=bazel_compdb=${ASPECTS_DIR}" \
   "--aspects=@bazel_compdb//:aspects.bzl%compilation_database_aspect" \
   "--noshow_progress" \
