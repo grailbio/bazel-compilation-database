@@ -36,12 +36,15 @@ import sys
 import xml.etree.ElementTree as ElementTree
 
 
+_BAZEL = os.getenv("BAZEL_COMPDB_BAZEL_PATH") or "bazel"
+
+
 def bazel_info():
     """Returns a dict containing key values from bazel info."""
 
     bazel_info_dict = dict()
     try:
-        out = subprocess.check_output(['bazel', 'info']).decode('utf-8').strip().split('\n')
+        out = subprocess.check_output([_BAZEL, 'info']).decode('utf-8').strip().split('\n')
     except subprocess.CalledProcessError as err:
         # This exit code is returned when this command is run outside of a bazel workspace.
         if err.returncode == 2:
@@ -57,7 +60,7 @@ def bazel_query(args):
     """Executes bazel query with the given args and returns the output."""
 
     # TODO: switch to cquery when it supports siblings and less crash-y with external repos.
-    query_cmd = ['bazel', 'query'] + args
+    query_cmd = [_BAZEL, 'query'] + args
     proc = subprocess.Popen(query_cmd, stdout=subprocess.PIPE)
     return proc.communicate()[0].decode('utf-8')
 
@@ -189,7 +192,7 @@ def cfamily_settings(filename):
     aspect_definition = '--aspects=@bazel_compdb//:aspects.bzl%compilation_database_aspect'
 
     bazel_aspects = [
-        'bazel',
+        _BAZEL,
         'build',
         aspect_definition,
         repository_override,
