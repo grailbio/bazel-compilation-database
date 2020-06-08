@@ -1,4 +1,4 @@
-Compilation database with Bazel [![Build Status](https://travis-ci.org/grailbio/bazel-compilation-database.svg?branch=master)](https://travis-ci.org/grailbio/bazel-compilation-database)
+Compilation database with Bazel ![Build Status](https://github.com/grailbio/bazel-compilation-database/workflows/Tests/badge.svg?branch=master)
 ===============================
 
 If you use [Bazel][bazel] and want to use libclang based editors and tools, you
