@@ -1,4 +1,4 @@
-Compilation database with Bazel ![Build Status](https://github.com/grailbio/bazel-compilation-database/workflows/Tests/badge.svg?branch=master)
+Compilation database with Bazel ![Tests](https://github.com/grailbio/bazel-compilation-database/workflows/Tests/badge.svg?branch=master) ![Migration](https://github.com/grailbio/bazel-compilation-database/workflows/Migration/badge.svg?branch=master)
 ===============================
 
 If you use [Bazel][bazel] and want to use libclang based editors and tools, you

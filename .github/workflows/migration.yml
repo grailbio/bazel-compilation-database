@@ -1,4 +1,4 @@
-name: Tests
+name: Migration
 
 on:
   push:
@@ -8,14 +8,12 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        os: [macos-latest, ubuntu-latest]
     steps:
     - uses: actions/checkout@v2
-    - name: Run tests
+    - name: Run migration tests
       env:
         BAZELISK_GITHUB_TOKEN: ${{ secrets.BAZELISK_GITHUB_TOKEN }}
-      run: tests/run_tests.sh
+      run: tests/check_migration.sh
