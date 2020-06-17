@@ -87,7 +87,7 @@ def get_compile_flags(dep):
     options = []
     compilation_context = dep[CcInfo].compilation_context
     for define in compilation_context.defines.to_list():
-        options.append("-D{}".format(define))
+        options.append("-D\"{}\"".format(define))
 
     for system_include in compilation_context.system_includes.to_list():
         if len(system_include) == 0:
@@ -200,7 +200,7 @@ def _objc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain):
         ),
     )
 
-    defines = ["-D{}".format(val) for val in target.objc.define.to_list()]
+    defines = ["-D\"{}\"".format(val) for val in target.objc.define.to_list()]
     includes = ["-I{}".format(val) for val in target.objc.include.to_list()]
     system_includes = ["-isystem {}".format(val) for val in target.objc.include_system.to_list()]
     iquotes = ["-iquote {}".format(val) for val in target.objc.iquote.to_list()]
