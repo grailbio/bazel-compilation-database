@@ -305,7 +305,7 @@ def _compilation_database_aspect_impl(target, ctx):
 
     return [
         CompilationAspect(compilation_db = compilation_db),
-        OutputGroupInfo(compdb_files = all_compdb_files),
+        OutputGroupInfo(compdb_files = all_compdb_files, header_files = target[CcInfo].compilation_context.headers),
     ]
 
 compilation_database_aspect = aspect(

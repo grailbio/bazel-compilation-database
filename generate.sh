@@ -80,7 +80,7 @@ function get_realpath() {
 }
 
 readonly ASPECTS_DIR="$(dirname "$(get_realpath "${BASH_SOURCE[0]}")")"
-readonly OUTPUT_GROUPS="compdb_files"
+readonly OUTPUT_GROUPS="compdb_files,header_files"
 readonly BAZEL="${BAZEL_COMPDB_BAZEL_PATH:-bazel}"
 
 readonly WORKSPACE="$("$BAZEL" info workspace)"
