@@ -15,15 +15,16 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 
 cc_library(
-    name = "A",
+    name = "a",
     srcs = ["a.cc"],
     hdrs = ["a.h"],
+    include_prefix = "dir_a",  # To test that we can work with _virtual_includes dirs.
 )
 
 cc_library(
-    name = "B",
+    name = "b",
     srcs = ["b.cc"],
-    deps = [":A"],
+    deps = [":a"],
 )
 
 cc_binary(
@@ -36,5 +37,5 @@ load("@compdb//:aspects.bzl", "compilation_database")
 compilation_database(
     name = "compdb",
     exec_root = "bazel-tests",
-    targets = ["B"],
+    targets = ["b"],
 )

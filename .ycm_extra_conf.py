@@ -196,7 +196,7 @@ def cfamily_settings(filename):
         'build',
         aspect_definition,
         repository_override,
-        '--output_groups=compdb_files',
+        '--output_groups=compdb_files,header_files',
     ] + labels
     proc = subprocess.Popen(bazel_aspects, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc.communicate()
