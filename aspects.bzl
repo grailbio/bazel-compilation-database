@@ -58,7 +58,7 @@ def _compilation_db_json(compilation_db):
     # Return a JSON string for the compilation db entries.
 
     entries = [entry.to_json() for entry in compilation_db]
-    return ",\n ".join(entries)
+    return ",\n".join(entries)
 
 def _is_cpp_target(srcs):
     return any([src.extension in _cpp_extensions for src in srcs])
@@ -343,15 +343,24 @@ def _compilation_database_impl(ctx):
         return
 
     compilation_db = []
+    all_headers = []
     for target in ctx.attr.targets:
         compilation_db.append(target[CompilationAspect].compilation_db)
+        all_headers.append(target[OutputGroupInfo].header_files)
 
     compilation_db = depset(transitive = compilation_db)
+    all_headers = depset(transitive = all_headers)
 
     content = "[\n" + _compilation_db_json(compilation_db.to_list()) + "\n]\n"
     content = content.replace("__EXEC_ROOT__", ctx.attr.exec_root)
     content = content.replace("-isysroot __BAZEL_XCODE_SDKROOT__", "")
     ctx.actions.write(output = ctx.outputs.filename, content = content)
+
+    return [
+        OutputGroupInfo(
+            default = all_headers,
+        ),
+    ]
 
 compilation_database = rule(
     attrs = {

@@ -8,7 +8,7 @@ else
   readonly os
 
   # Fetch bazelisk on user machines.
-  readonly url="https://github.com/bazelbuild/bazelisk/releases/download/v1.4.0/bazelisk-${os}-amd64"
+  readonly url="https://github.com/bazelbuild/bazelisk/releases/download/v1.5.0/bazelisk-${os}-amd64"
   readonly bin_dir="${TMPDIR:-/tmp}/bin"
   readonly bazel="${bin_dir}/bazel"
 
