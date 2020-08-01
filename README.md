@@ -57,7 +57,7 @@ http_archive(
 )
 ```
 
-In your BUILD file:
+In your BUILD file located in any package:
 ```python
 ## Replace workspace_name and dir_path as per your setup.
 load("@com_grail_bazel_compdb//:aspects.bzl", "compilation_database")
@@ -68,9 +68,26 @@ compilation_database(
         "//a_cc_binary_label",
         "//a_cc_library_label",
     ],
-    # ideally should be the same as `bazel info execution_root`.
+    # [Optional]
+    # If your exec root (value returned by `bazel info execution_root`)
+    # is constant across your users, then you can supply the value here.
+    # Otherwise, the default is `__EXEC_ROOT__` which you can replace in
+    # the output file using `sed` or similar tool (see below).
     exec_root = "/path/to/bazel/exec_root",
 )
+```
+
+Then, in your terminal (you can wrap this in a shell script and check it in your repo):
+```
+# Command to generate the compilation database file.
+bazel build //path/to/pkg/dir:example_compdb
+
+# Location of the compilation database file.
+outfile="$(bazel info bazel-bin)/path/to/pkg/dir/compile_commands.json"
+
+# Command to replace the marker for exec_root in the file.
+execroot=$(bazel info execution_root)
+sed -i.bak "s@__EXEC_ROOT__@${execroot}" "${outfile}"
 ```
 
 ### YouCompleteMe
