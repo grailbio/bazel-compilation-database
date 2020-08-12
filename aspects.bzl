@@ -267,14 +267,7 @@ def _compilation_database_aspect_impl(target, ctx):
     else:
         compiler_info = _objc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain)
 
-    compile_flags = compiler_info.compile_flags
-    compile_flags += [
-        # Use -I to indicate that we want to keep the normal position in the system include chain.
-        # See https://github.com/grailbio/bazel-compilation-database/issues/36#issuecomment-531971361.
-        "-I " + str(d)
-        for d in cc_toolchain.built_in_include_directories
-    ]
-    compile_command = compiler_info.compiler + " " + " ".join(compile_flags) + compiler_info.force_language_mode_option
+    compile_command = compiler_info.compiler + " " + " ".join(compiler_info.compile_flags) + compiler_info.force_language_mode_option
 
     for src in srcs:
         command_for_file = compile_command + " -c " + src.path
