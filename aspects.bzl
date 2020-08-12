@@ -362,7 +362,7 @@ def _compilation_database_impl(ctx):
         ),
     ]
 
-compilation_database = rule(
+_compilation_database = rule(
     attrs = {
         "targets": attr.label_list(
             aspects = [compilation_database_aspect],
@@ -379,9 +379,15 @@ compilation_database = rule(
                    "supported. For known unsupported platforms (e.g. Windows), the " +
                    "rule is always a no-op."),
         ),
-    },
-    outputs = {
-        "filename": "compile_commands.json",
+        "filename": attr.output(
+            doc = "Name of the generated compilation database.",
+        ),
     },
     implementation = _compilation_database_impl,
 )
+
+def compilation_database(**kwargs):
+    _compilation_database(
+        filename = kwargs.pop("filename", "compile_commands.json"),
+        **kwargs,
+    )
