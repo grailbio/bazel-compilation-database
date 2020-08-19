@@ -1,4 +1,3 @@
-# Copyright 2017-2020 GRAIL, Inc.
 # Copyright 2020 NVIDIA, Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-workspace(name = "compdb_tests")
-
-new_local_repository(
-    name = "compdb",
-    build_file_content = "",
-    path = "..",
+CustomConfigProvider = provider(
+    fields = {
+        'value': 'value of the custom config',
+    }
 )
 
-load("@compdb//:config.bzl", "config_clang_compdb")
+def _custom_config_impl(ctx):
+    return CustomConfigProvider(value = ctx.attr.value)
 
-config_clang_compdb(
-    workspace_name = "compdb_tests",
-    filter_flags = [
-        "-fno-canonical-system-headers",
-    ],
+custom_config_string = rule(
+    implementation = _custom_config_impl,
+    attrs = dict(
+        value = attr.string(
+            mandatory = True,
+        )
+    )
+)
+
+custom_config_string_list = rule(
+    implementation = _custom_config_impl,
+    attrs = dict(
+        value = attr.string_list(
+            mandatory = True,
+        )
+    )
 )

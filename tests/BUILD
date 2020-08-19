@@ -36,6 +36,5 @@ load("@compdb//:aspects.bzl", "compilation_database")
 
 compilation_database(
     name = "compdb",
-    exec_root = "__TEST_EXEC_ROOT__",
     targets = ["b"],
 )

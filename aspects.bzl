@@ -1,4 +1,5 @@
-# Copyright 2017 GRAIL, Inc.
+# Copyright 2017-2020 GRAIL, Inc.
+# Copyright 2020 NVIDIA, Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +31,9 @@ load(
     "OBJCPP_COMPILE_ACTION_NAME",
     "OBJC_COMPILE_ACTION_NAME",
 )
+
+load(":custom_config.bzl", "CustomConfigProvider")
+load(":config.bzl", "config_exec_root", "config_filter_flags")
 
 CompilationAspect = provider()
 
@@ -249,6 +253,7 @@ def _compilation_database_aspect_impl(target, ctx):
         return []
 
     compilation_db = []
+    source_files = []
 
     cc_toolchain = find_cpp_toolchain(ctx)
     feature_configuration = cc_common.configure_features(
@@ -269,37 +274,42 @@ def _compilation_database_aspect_impl(target, ctx):
 
     compile_command = compiler_info.compiler + " " + " ".join(compiler_info.compile_flags) + compiler_info.force_language_mode_option
 
+    filter_flags = ctx.attr._filter_flags[CustomConfigProvider].value
+    for flag in filter_flags:
+        compile_command = compile_command.replace(flag, "")
+
+    exec_root = ctx.attr._exec_root[CustomConfigProvider].value
     for src in srcs:
         command_for_file = compile_command + " -c " + src.path
 
-        exec_root_marker = "__EXEC_ROOT__"
         compilation_db.append(
-            struct(command = command_for_file, directory = exec_root_marker, file = src.path),
+            struct(command = command_for_file, directory = exec_root, file = src.path),
         )
-
-    # Write the commands for this target.
-    compdb_file = ctx.actions.declare_file(ctx.label.name + ".compile_commands.json")
-    ctx.actions.write(
-        content = _compilation_db_json(compilation_db),
-        output = compdb_file,
-    )
+        source_files.append(src)
 
     # Collect all transitive dependencies.
     transitive_compilation_db = []
-    all_compdb_files = []
     for dep in ctx.rule.attr.deps:
         if CompilationAspect not in dep:
             continue
         transitive_compilation_db.append(dep[CompilationAspect].compilation_db)
-        all_compdb_files.append(dep[OutputGroupInfo].compdb_files)
 
     compilation_db = depset(compilation_db, transitive = transitive_compilation_db)
-    all_compdb_files = depset([compdb_file], transitive = all_compdb_files)
+
+    # Write the commands for this target.
+    compdb_file = ctx.actions.declare_file(target.label.name + ".compile_commands.json")
+    ctx.actions.write(
+        content = "[\n" + _compilation_db_json(compilation_db.to_list()) + "\n]\n",
+        output = compdb_file,
+    )
 
     return [
-        CompilationAspect(compilation_db = compilation_db),
+        CompilationAspect(
+            compilation_db = compilation_db,
+        ),
         OutputGroupInfo(
-            compdb_files = all_compdb_files,
+            compdb_file = depset([compdb_file]),
+            source_files = depset(source_files),
             header_files = target[CcInfo].compilation_context.headers,
         ),
     ]
@@ -307,6 +317,12 @@ def _compilation_database_aspect_impl(target, ctx):
 compilation_database_aspect = aspect(
     attr_aspects = ["deps"],
     attrs = {
+        "_exec_root": attr.label(
+            default = Label(config_exec_root),
+        ),
+        "_filter_flags": attr.label(
+            default = Label(config_filter_flags),
+        ),
         "_cc_toolchain": attr.label(
             default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
         ),
@@ -345,8 +361,6 @@ def _compilation_database_impl(ctx):
     all_headers = depset(transitive = all_headers)
 
     content = "[\n" + _compilation_db_json(compilation_db.to_list()) + "\n]\n"
-    content = content.replace("__EXEC_ROOT__", ctx.attr.exec_root)
-    content = content.replace("-isysroot __BAZEL_XCODE_SDKROOT__", "")
     ctx.actions.write(output = ctx.outputs.filename, content = content)
 
     return [
@@ -360,10 +374,6 @@ _compilation_database = rule(
         "targets": attr.label_list(
             aspects = [compilation_database_aspect],
             doc = "List of all cc targets which should be included.",
-        ),
-        "exec_root": attr.string(
-            default = "__EXEC_ROOT__",
-            doc = "Execution root of Bazel as returned by 'bazel info execution_root'.",
         ),
         "disable": attr.bool(
             default = False,
