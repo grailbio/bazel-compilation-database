@@ -12,6 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "a.h"
+#include "dir_a/a.h"
 
 int A::field_value() const {return field_a;}
