@@ -1,4 +1,5 @@
-# Copyright 2017 GRAIL, Inc.
+# Copyright 2017-2020 GRAIL, Inc.
+# Copyright 2020 NVIDIA, Corp.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,4 +38,24 @@ load("@compdb//:aspects.bzl", "compilation_database")
 compilation_database(
     name = "compdb",
     targets = ["b"],
+)
+
+load("@compdb//:clang-tidy.bzl", "clang_tidy_test")
+
+clang_tidy_test(
+    name = "clang_tidy_test_a",
+    src = ":a",
+    config = "//:.clang-tidy",
+)
+
+clang_tidy_test(
+    name = "clang_tidy_test_b",
+    src = ":b",
+    config = "//:.clang-tidy",
+)
+
+clang_tidy_test(
+    name = "clang_tidy_test_stdlib",
+    src = ":stdlib",
+    config = "//:.clang-tidy",
 )
