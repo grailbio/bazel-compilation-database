@@ -22,7 +22,7 @@ cmd="ln -sf {compdb_file} compile_commands.json"
 echo $cmd
 eval $cmd
 
-cmd="clang-tidy {options} {sources}"
+cmd="clang-tidy {options} $@ {sources}"
 echo $cmd
 eval $cmd
 """
