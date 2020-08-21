@@ -32,6 +32,9 @@ def _clang_tidy_check_impl(ctx):
     src_files = ctx.attr.src[OutputGroupInfo].source_files.to_list()
     hdr_files = ctx.attr.src[OutputGroupInfo].header_files.to_list()
 
+    if len(src_files) == 0:
+        fail("`src` must be a target with at least one source or header.")
+
     sources = " ".join([ src.short_path for src in src_files ])
     build_path = compdb_file.dirname.replace(compdb_file.root.path + "/", "")
     options = " ".join(ctx.attr.options)
