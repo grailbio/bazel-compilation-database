@@ -110,7 +110,7 @@ fi
   $("${QUERY_CMD[@]}") > /dev/null
 
 echo "[" > "${COMPDB_FILE}"
-find "${EXEC_ROOT}" -name '*.compile_commands.json' -exec bash -c 'cat "$1" && echo ,' _ {} \; \
+find "${EXEC_ROOT}" -name '*.compile_commands.json' -not -empty -exec bash -c 'cat "$1" && echo ,' _ {} \; \
   >> "${COMPDB_FILE}"
 echo "]" >> "${COMPDB_FILE}"
 
