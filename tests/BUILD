@@ -33,6 +33,8 @@ cc_binary(
     srcs = ["stdlib.cc"],
 )
 
+cc_library(name = "empty")
+
 load("@compdb//:aspects.bzl", "compilation_database")
 
 compilation_database(
@@ -59,3 +61,10 @@ clang_tidy_test(
     src = ":stdlib",
     config = "//:.clang-tidy",
 )
+
+clang_tidy_test(
+    name = "clang_tidy_test_empty",
+    src = ":empty",
+    config = "//:.clang-tidy",
+)
+

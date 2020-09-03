@@ -33,7 +33,14 @@ def _clang_tidy_check_impl(ctx):
     hdr_files = ctx.attr.src[OutputGroupInfo].header_files.to_list()
 
     if len(src_files) == 0:
-        fail("`src` must be a target with at least one source or header.")
+        if ctx.attr.mandatory:
+            fail("`src` must be a target with at least one source or header.")
+        else:
+            test_script = ctx.actions.declare_file(ctx.attr.name + ".sh")
+            ctx.actions.write(output = test_script, content = "#noop", is_executable = True)
+
+            return DefaultInfo(executable = test_script)
+
 
     sources = " ".join([ src.short_path for src in src_files ])
     build_path = compdb_file.dirname.replace(compdb_file.root.path + "/", "")
@@ -66,6 +73,10 @@ clang_tidy_test = rule(
         "src": attr.label(
             aspects = [compilation_database_aspect],
             doc = "Source target to run clang-tidy on.",
+        ),
+        "mandatory": attr.bool(
+            default = False,
+            doc = "Throw error if `src` is not eligible for linter check, e.g. have no C/C++ source or header.",
         ),
         "config": attr.label(
             doc = "Clang tidy configuration file",
