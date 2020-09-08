@@ -34,6 +34,7 @@ load(
 CompilationAspect = provider()
 
 _cpp_header_extensions = [
+    "hh",
     "hxx",
     "ipp",
     "hpp",
