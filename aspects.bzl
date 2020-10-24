@@ -326,15 +326,6 @@ def _compilation_database_impl(ctx):
         ctx.actions.write(output = ctx.outputs.filename, content = "[]\n")
         return
 
-    # We make this rule a no-op on Windows because it is not supported.
-    # We use the exposed host path separator as a hack to detect Windows.
-    # The ideal solution here would be to use toolchains.
-    # https://github.com/bazelbuild/bazel/issues/2045
-    if ctx.configuration.host_path_separator != ":":
-        print("Windows is not supported in compilation_database rule")
-        ctx.actions.write(output = ctx.outputs.filename, content = "[]\n")
-        return
-
     compilation_db = []
     all_headers = []
     for target in ctx.attr.targets:
@@ -369,8 +360,7 @@ _compilation_database = rule(
             default = False,
             doc = ("Makes this operation a no-op; useful in combination with a 'select' " +
                    "for platforms where the internals of this rule are not properly " +
-                   "supported. For known unsupported platforms (e.g. Windows), the " +
-                   "rule is always a no-op."),
+                   "supported."),
         ),
         "filename": attr.output(
             doc = "Name of the generated compilation database.",
