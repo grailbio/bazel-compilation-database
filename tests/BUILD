@@ -27,6 +27,11 @@ cc_library(
     deps = [":a"],
 )
 
+cc_library(
+    name = "b_forward",
+    deps = [":b"],
+)
+
 cc_binary(
     name = "stdlib",
     srcs = ["stdlib.cc"],
