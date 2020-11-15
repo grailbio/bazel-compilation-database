@@ -33,11 +33,20 @@ load(
 
 CompilationAspect = provider()
 
+_cpp_header_extensions = [
+    "hh",
+    "hxx",
+    "ipp",
+    "hpp",
+]
+
+_c_or_cpp_header_extensions = ["h"] + _cpp_header_extensions
+
 _cpp_extensions = [
     "cc",
     "cpp",
     "cxx",
-]
+] + _cpp_header_extensions
 
 _cc_rules = [
     "cc_library",
@@ -61,6 +70,8 @@ def _compilation_db_json(compilation_db):
     return ",\n".join(entries)
 
 def _is_cpp_target(srcs):
+    if all([src.extension in _c_or_cpp_header_extensions for src in srcs]):
+        return True  # assume header-only lib is c++
     return any([src.extension in _cpp_extensions for src in srcs])
 
 def _is_objcpp_target(srcs):
