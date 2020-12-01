@@ -197,6 +197,11 @@ def _objc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
 
     srcs = _sources(ctx, target)
 
+    non_arc_srcs = []
+    if "non_arc_srcs" in dir(ctx.rule.attr):
+        non_arc_srcs += [f for src in ctx.rule.attr.non_arc_srcs for f in src.files.to_list()]
+    srcs.extend(non_arc_srcs)
+
     # We currently recognize an entire target as objective-c++ or not. This can
     # probably be made better for targets that have a mix of files.
     is_objcpp_target = _is_objcpp_target(srcs)
@@ -234,9 +239,6 @@ def _objc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
     )
     compile_flags.extend(frameworks)
 
-    # TODO: This needs to be per-file.
-    compile_flags.append("-fobjc-arc")
-
     compile_flags.extend(ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else [])
 
     xcode_paths = _xcode_paths(ctx)
@@ -254,8 +256,9 @@ def _objc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
 
     compile_commands = []
     for src in srcs:
+        arc_flag = "" if src in non_arc_srcs else " -fobjc-arc"
         compile_commands.append(struct(
-            cmdline = cmdline + " -c " + src.path,
+            cmdline = cmdline + arc_flag + " -c " + src.path,
             src = src,
         ))
     return compile_commands
