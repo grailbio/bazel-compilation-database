@@ -100,6 +100,9 @@ def get_compile_flags(dep):
     for define in compilation_context.defines.to_list():
         options.append("-D\"{}\"".format(define))
 
+    for define in compilation_context.local_defines.to_list():
+        options.append("-D\"{}\"".format(define))
+
     for system_include in compilation_context.system_includes.to_list():
         if len(system_include) == 0:
             system_include = "."
