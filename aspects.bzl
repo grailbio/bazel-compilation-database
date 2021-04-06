@@ -211,13 +211,9 @@ def _objc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain):
         ),
     )
 
-    defines = ["-D\"{}\"".format(val) for val in target.objc.define.to_list()]
-    includes = ["-I{}".format(val) for val in target.objc.include.to_list()]
-    system_includes = ["-isystem {}".format(val) for val in target.objc.include_system.to_list()]
-    iquotes = ["-iquote {}".format(val) for val in target.objc.iquote.to_list()]
     frameworks = (["-F {}/..".format(val) for val in target.objc.static_framework_paths.to_list()] +
                   ["-F {}/..".format(val) for val in target.objc.dynamic_framework_paths.to_list()] +
-                  ["-F {}/..".format(val) for val in target.objc.framework_search_path_only.to_list()])
+                  ["-F {}/..".format(val) for val in target[CcInfo].compilation_context.framework_includes.to_list()])
 
     xcode_config = ctx.attr._xcode_config[apple_common.XcodeVersionConfig]
 
@@ -236,10 +232,7 @@ def _objc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain):
                      ["-F {}/Developer/Library/Frameworks".format(platform_root)] +
                      # FIXME this needs to be done per-file to be fully correct
                      ["-fobjc-arc"] +
-                     defines +
-                     includes +
-                     iquotes +
-                     system_includes +
+                     get_compile_flags(target) +
                      frameworks +
                      (ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else []))
 
@@ -383,5 +376,5 @@ _compilation_database = rule(
 def compilation_database(**kwargs):
     _compilation_database(
         filename = kwargs.pop("filename", "compile_commands.json"),
-        **kwargs,
+        **kwargs
     )
