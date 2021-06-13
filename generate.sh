@@ -91,6 +91,7 @@ readonly QUERY_CMD=(
   "$BAZEL" query
     --noshow_progress
     --noshow_loading_progress
+    --output label
     'kind("cc_(library|binary|test|inc_library|proto_library)", //...) union kind("objc_(library|binary|test)", //...)'
 )
 
