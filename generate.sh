@@ -37,6 +37,7 @@ while getopts "sh" opt; do
     *) >&2 echo "invalid option ${opt}"; exit 1;;
   esac
 done
+shift $((OPTIND-1))
 
 # This function is copied from https://source.bazel.build/bazel/+/master:scripts/packages/bazel.sh.
 # `readlink -f` that works on OSX too.

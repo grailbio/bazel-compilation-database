@@ -32,9 +32,13 @@ VERSION="0.4.5"
 
 bazel-compdb # This will generate compile_commands.json in your workspace root.
 
+# To pass additional flags to bazel, pass the flags as arguments after --
+bazel-compdb -- [additional flags for bazel]
+
 # You can tweak some behavior with flags:
 # 1. To use the source dir instead of bazel-execroot for directory in which clang commands are run.
 bazel-compdb -s
+bazel-compdb -s -- [additional flags for bazel]
 ```
 
 ### Selected targets
