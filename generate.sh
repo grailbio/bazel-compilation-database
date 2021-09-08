@@ -92,6 +92,7 @@ readonly QUERY_CMD=(
   "$BAZEL" query
     --noshow_progress
     --noshow_loading_progress
+    --output label
     'kind("^cc_(library|binary|test|inc_library|proto_library)", //...) union kind("^objc_(library|binary|test)", //...)'
 )
 
@@ -111,7 +112,8 @@ fi
   $("${QUERY_CMD[@]}") > /dev/null
 
 echo "[" > "${COMPDB_FILE}"
-find "${EXEC_ROOT}" -name '*.compile_commands.json' -not -empty -exec bash -c 'cat "$1" && echo ,' _ {} \; \
+find "${EXEC_ROOT}" -name '*.compile_commands.json' -not -empty \
+    | awk '{fn=$0; RS="^$"; getline s<fn; close(fn); RS="\n"; print s "," }' \
   >> "${COMPDB_FILE}"
 echo "]" >> "${COMPDB_FILE}"
 
