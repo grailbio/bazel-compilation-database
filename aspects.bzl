@@ -75,26 +75,19 @@ def _is_cpp_target(srcs):
     return any([src.extension in _cpp_extensions for src in srcs])
 
 def _is_objcpp_target(srcs):
-    for src in srcs:
-        if src.extension == "mm":
-            return True
+    return any([src.extension == "mm" for src in srcs])
 
-    return False
-
-def _sources(target, ctx):
+def _sources(ctx, target):
     srcs = []
     if "srcs" in dir(ctx.rule.attr):
         srcs += [f for src in ctx.rule.attr.srcs for f in src.files.to_list()]
     if "hdrs" in dir(ctx.rule.attr):
         srcs += [f for src in ctx.rule.attr.hdrs for f in src.files.to_list()]
 
-    if ctx.rule.kind == "cc_proto_library":
-        srcs += [f for f in target.files.to_list() if f.extension in ["h", "cc"]]
-
     return srcs
 
 # Function copied from https://gist.github.com/oquenchil/7e2c2bd761aa1341b458cc25608da50c
-def get_compile_flags(dep):
+def _get_compile_flags(dep):
     options = []
     compilation_context = dep[CcInfo].compilation_context
     for define in compilation_context.defines.to_list():
@@ -118,17 +111,47 @@ def get_compile_flags(dep):
             quote_include = "."
         options.append("-iquote {}".format(quote_include))
 
+    for framework_include in compilation_context.framework_includes.to_list():
+        options.append("-F\"{}\"".format(framework_include))
+
     return options
 
-def _cc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain):
-    compile_variables = None
-    compiler_options = None
-    compiler = None
-    compile_flags = None
-    force_language_mode_option = ""
+def _xcode_paths(ctx):
+    xcode_config = ctx.attr._xcode_config[apple_common.XcodeVersionConfig]
 
-    # This is useful for compiling .h headers as C++ code.
-    if _is_cpp_target(srcs):
+    sdk_version = xcode_config.sdk_version_for_platform(ctx.fragments.apple.single_arch_platform)
+    apple_env = apple_common.target_apple_env(xcode_config, ctx.fragments.apple.single_arch_platform)
+    sdk_platform = apple_env["APPLE_SDK_PLATFORM"]
+
+    # FIXME is there any way of getting the SDKROOT value here? The only thing that seems to know about it is
+    # XcodeLocalEnvProvider, but I can't seem to find a way to access that
+    platform_root = "/Applications/Xcode.app/Contents/Developer/Platforms/{platform}.platform".format(platform = sdk_platform)
+    sdk_root = "/Applications/Xcode.app/Contents/Developer/Platforms/{platform}.platform/Developer/SDKs/{platform}{version}.sdk".format(platform = sdk_platform, version = sdk_version)
+
+    return struct(
+        platform_root = platform_root,
+        sdk_root = sdk_root,
+    )
+
+def _cc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
+    compiler = str(
+        cc_common.get_tool_for_action(
+            feature_configuration = feature_configuration,
+            action_name = C_COMPILE_ACTION_NAME,
+        ),
+    )
+    compile_flags = _get_compile_flags(target)
+
+    srcs = _sources(ctx, target)
+    if ctx.rule.kind == "cc_proto_library":
+        srcs += [f for f in target.files.to_list() if f.extension in ["h", "cc"]]
+
+    # We currently recognize an entire target as C++ or C. This can probably be
+    # made better for targets that have a mix of C and C++ files.
+    is_cpp_target = _is_cpp_target(srcs)
+
+    compiler_options = None
+    if is_cpp_target:
         compile_variables = cc_common.create_compile_variables(
             feature_configuration = feature_configuration,
             cc_toolchain = cc_toolchain,
@@ -141,7 +164,7 @@ def _cc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain):
             action_name = CPP_COMPILE_ACTION_NAME,
             variables = compile_variables,
         )
-        force_language_mode_option = " -x c++"
+        compile_flags.append("-x c++")  # Force language mode for header files.
     else:
         compile_variables = cc_common.create_compile_variables(
             feature_configuration = feature_configuration,
@@ -154,34 +177,38 @@ def _cc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain):
             variables = compile_variables,
         )
 
+    compile_flags.extend(ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else [])
+
+    cmdline_list = [compiler]
+    cmdline_list.extend(compiler_options)
+    cmdline_list.extend(compile_flags)
+    cmdline = " ".join(cmdline_list)
+
+    compile_commands = []
+    for src in srcs:
+        compile_commands.append(struct(
+            cmdline = cmdline + " -c " + src.path,
+            src = src,
+        ))
+    return compile_commands
+
+def _objc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
     compiler = str(
         cc_common.get_tool_for_action(
             feature_configuration = feature_configuration,
-            action_name = C_COMPILE_ACTION_NAME,
+            action_name = OBJC_COMPILE_ACTION_NAME,
         ),
     )
+    compile_flags = _get_compile_flags(target)
 
-    compile_flags = (compiler_options +
-                     get_compile_flags(target) +
-                     (ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else []))
+    srcs = _sources(ctx, target)
 
-    return struct(
-        compile_variables = compile_variables,
-        compiler_options = compiler_options,
-        compiler = compiler,
-        compile_flags = compile_flags,
-        force_language_mode_option = force_language_mode_option,
-    )
+    # We currently recognize an entire target as objective-c++ or not. This can
+    # probably be made better for targets that have a mix of files.
+    is_objcpp_target = _is_objcpp_target(srcs)
 
-def _objc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain):
-    compile_variables = None
     compiler_options = None
-    compiler = None
-    compile_flags = None
-    force_language_mode_option = ""
-
-    # This is useful for compiling .h headers as C++ code.
-    if _is_objcpp_target(srcs):
+    if is_objcpp_target:
         compile_variables = cc_common.create_compile_variables(
             feature_configuration = feature_configuration,
             cc_toolchain = cc_toolchain,
@@ -193,7 +220,7 @@ def _objc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain):
             action_name = OBJCPP_COMPILE_ACTION_NAME,
             variables = compile_variables,
         )
-        force_language_mode_option = " -x objective-c++"
+        compile_flags.append("-x objective-c++")  # Force language mode for header files.
     else:
         compile_variables = cc_common.create_compile_variables(
             feature_configuration = feature_configuration,
@@ -205,47 +232,39 @@ def _objc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain):
             action_name = OBJC_COMPILE_ACTION_NAME,
             variables = compile_variables,
         )
-        force_language_mode_option = " -x objective-c"
+        compile_flags.append("-x objective-c")  # Force language mode for header files.
 
-    compiler = str(
-        cc_common.get_tool_for_action(
-            feature_configuration = feature_configuration,
-            action_name = OBJC_COMPILE_ACTION_NAME,
-        ),
+    frameworks = (
+        ["-F {}/..".format(val) for val in target.objc.static_framework_paths.to_list()] +
+        ["-F {}/..".format(val) for val in target.objc.dynamic_framework_paths.to_list()]
     )
+    compile_flags.extend(frameworks)
 
-    frameworks = (["-F {}/..".format(val) for val in target.objc.static_framework_paths.to_list()] +
-                  ["-F {}/..".format(val) for val in target.objc.dynamic_framework_paths.to_list()] +
-                  ["-F {}/..".format(val) for val in target[CcInfo].compilation_context.framework_includes.to_list()])
+    # TODO: This needs to be per-file.
+    compile_flags.append("-fobjc-arc")
 
-    xcode_config = ctx.attr._xcode_config[apple_common.XcodeVersionConfig]
+    compile_flags.extend(ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else [])
 
-    sdk_version = xcode_config.sdk_version_for_platform(ctx.fragments.apple.single_arch_platform)
-    apple_env = apple_common.target_apple_env(xcode_config, ctx.fragments.apple.single_arch_platform)
-    sdk_platform = apple_env["APPLE_SDK_PLATFORM"]
+    xcode_paths = _xcode_paths(ctx)
+    system_flags = [
+        "-isysroot {}".format(xcode_paths.sdk_root),
+        "-F {}/System/Library/Frameworks".format(xcode_paths.sdk_root),
+        "-F {}/Developer/Library/Frameworks".format(xcode_paths.platform_root),
+    ]
 
-    # FIXME is there any way of getting the SDKROOT value here? The only thing that seems to know about it is
-    # XcodeLocalEnvProvider, but I can't seem to find a way to access that
-    platform_root = "/Applications/Xcode.app/Contents/Developer/Platforms/{platform}.platform".format(platform = sdk_platform)
-    sdk_root = "/Applications/Xcode.app/Contents/Developer/Platforms/{platform}.platform/Developer/SDKs/{platform}{version}.sdk".format(platform = sdk_platform, version = sdk_version)
+    cmdline_list = [compiler]
+    cmdline_list.extend(compiler_options)
+    cmdline_list.extend(system_flags)
+    cmdline_list.extend(compile_flags)
+    cmdline = " ".join(cmdline_list)
 
-    compile_flags = (compiler_options +
-                     ["-isysroot {}".format(sdk_root)] +
-                     ["-F {}/System/Library/Frameworks".format(sdk_root)] +
-                     ["-F {}/Developer/Library/Frameworks".format(platform_root)] +
-                     # FIXME this needs to be done per-file to be fully correct
-                     ["-fobjc-arc"] +
-                     get_compile_flags(target) +
-                     frameworks +
-                     (ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else []))
-
-    return struct(
-        compile_variables = compile_variables,
-        compiler_options = compiler_options,
-        compiler = compiler,
-        compile_flags = compile_flags,
-        force_language_mode_option = force_language_mode_option,
-    )
+    compile_commands = []
+    for src in srcs:
+        compile_commands.append(struct(
+            cmdline = cmdline + " -c " + src.path,
+            src = src,
+        ))
+    return compile_commands
 
 def _compilation_database_aspect_impl(target, ctx):
     # Write the compile commands for this target to a file, and return
@@ -265,23 +284,15 @@ def _compilation_database_aspect_impl(target, ctx):
         unsupported_features = ctx.disabled_features,
     )
 
-    srcs = _sources(target, ctx)
-
-    compiler_info = None
-
     if ctx.rule.kind in _cc_rules:
-        compiler_info = _cc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain)
+        compile_commands = _cc_compile_commands(ctx, target, feature_configuration, cc_toolchain)
     else:
-        compiler_info = _objc_compiler_info(ctx, target, srcs, feature_configuration, cc_toolchain)
+        compile_commands = _objc_compile_commands(ctx, target, feature_configuration, cc_toolchain)
 
-    compile_command = compiler_info.compiler + " " + " ".join(compiler_info.compile_flags) + compiler_info.force_language_mode_option
-
-    for src in srcs:
-        command_for_file = compile_command + " -c " + src.path
-
+    for compile_command in compile_commands:
         exec_root_marker = "__EXEC_ROOT__"
         compilation_db.append(
-            struct(command = command_for_file, directory = exec_root_marker, file = src.path),
+            struct(command = compile_command.cmdline, directory = exec_root_marker, file = compile_command.src.path),
         )
 
     # Write the commands for this target.
