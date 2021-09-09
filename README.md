@@ -21,7 +21,7 @@ somewhere in your PATH.
 For example,
 ```sh
 INSTALL_DIR="/usr/local/bin"
-VERSION="0.4.5"
+VERSION="0.5.0"
 
 # Download and symlink.
 (
@@ -56,11 +56,10 @@ For example,
 
 In your WORKSPACE file:
 ```python
-# Change master to the git tag you want.
 http_archive(
     name = "com_grail_bazel_compdb",
-    strip_prefix = "bazel-compilation-database-master",
-    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/master.tar.gz"],
+    strip_prefix = "bazel-compilation-database-0.5.0",
+    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/0.5.0.tar.gz"],
 )
 ```
 
