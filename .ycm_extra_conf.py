@@ -49,6 +49,7 @@ def bazel_info():
         # This exit code is returned when this command is run outside of a bazel workspace.
         if err.returncode == 2:
             sys.exit(0)
+        sys.exit(err.returncode)
 
     for line in out:
         key_val = line.strip().partition(": ")
@@ -123,10 +124,8 @@ def get_aspects_filepath(label, bazel_bin):
 def get_compdb_json(aspects_filepath, bazel_exec_root):
     """Returns the JSON string read from the file after necessary processing."""
 
-    compdb_json_str = "[\n"
     with open(aspects_filepath, 'r') as aspects_file:
-        compdb_json_str += aspects_file.read()
-    compdb_json_str += "\n]"
+        compdb_json_str = aspects_file.read()
     return re.sub('__EXEC_ROOT__', bazel_exec_root, compdb_json_str)
 
 def get_flags(filepath, compdb_json_str):

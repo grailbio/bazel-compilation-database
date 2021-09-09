@@ -63,12 +63,6 @@ _objc_rules = [
 
 _all_rules = _cc_rules + _objc_rules
 
-def _compilation_db_json(compilation_db):
-    # Return a JSON string for the compilation db entries.
-
-    entries = [entry.to_json() for entry in compilation_db]
-    return ",\n".join(entries)
-
 def _is_cpp_target(srcs):
     if all([src.extension in _c_or_cpp_header_extensions for src in srcs]):
         return True  # assume header-only lib is c++
@@ -325,7 +319,7 @@ def _compilation_database_aspect_impl(target, ctx):
     # Write the commands for this target.
     compdb_file = ctx.actions.declare_file(ctx.label.name + ".compile_commands.json")
     ctx.actions.write(
-        content = _compilation_db_json(compilation_db),
+        content = json.encode(compilation_db),
         output = compdb_file,
     )
 
@@ -375,7 +369,7 @@ def _compilation_database_impl(ctx):
     compilation_db = depset(transitive = compilation_db)
     all_headers = depset(transitive = all_headers)
 
-    content = "[\n" + _compilation_db_json(compilation_db.to_list()) + "\n]\n"
+    content = json.encode(compilation_db.to_list())
     content = content.replace("__EXEC_ROOT__", ctx.attr.exec_root)
     content = content.replace("-isysroot __BAZEL_XCODE_SDKROOT__", "")
     ctx.actions.write(output = ctx.outputs.filename, content = content)
