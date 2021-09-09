@@ -23,16 +23,19 @@
 set -e
 
 source_dir=0
+query_expr="//..."
 
 usage() {
   printf "usage: %s flags\nwhere flags can be:\n" "${BASH_SOURCE[0]}"
   printf "\t-s\tuse the original source directory instead of bazel execroot\n"
+  printf "\t-q\tbazel query expr to find targets, default to \"//...\"\n"
   printf "\n"
 }
 
-while getopts "sh" opt; do
+while getopts "sq:h" opt; do
   case "${opt}" in
     "s") source_dir=1 ;;
+    "q") query_expr="${OPTARG}" ;;
     "h") usage; exit 0;;
     *) >&2 echo "invalid option ${opt}"; exit 1;;
   esac
@@ -93,7 +96,7 @@ readonly QUERY_CMD=(
     --noshow_progress
     --noshow_loading_progress
     --output label
-    'kind("^cc_(library|binary|test|inc_library|proto_library)", //...) union kind("^objc_(library|binary|test)", //...)'
+    "kind(\"cc_(library|binary|test|inc_library|proto_library)\", ${query_expr}) union kind(\"objc_(library|binary|test)\", ${query_expr})"
 )
 
 # Clean any previously generated files.

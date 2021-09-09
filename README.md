@@ -39,6 +39,9 @@ bazel-compdb -- [additional flags for bazel]
 # 1. To use the source dir instead of bazel-execroot for directory in which clang commands are run.
 bazel-compdb -s
 bazel-compdb -s -- [additional flags for bazel]
+# 2. To consider only targets given by a specific query pattern, say `//cc/...`. Also see below section for another way.
+bazel-compdb -q //cc/...
+bazel-compdb -q //cc/... -- [additional flags for bazel]
 ```
 
 ### Selected targets
