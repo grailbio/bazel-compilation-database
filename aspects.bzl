@@ -79,9 +79,9 @@ def _is_objcpp_target(srcs):
 
 def _sources(ctx, target):
     srcs = []
-    if "srcs" in dir(ctx.rule.attr):
+    if hasattr(ctx.rule.attr, "srcs"):
         srcs += [f for src in ctx.rule.attr.srcs for f in src.files.to_list()]
-    if "hdrs" in dir(ctx.rule.attr):
+    if hasattr(ctx.rule.attr, "hdrs"):
         srcs += [f for src in ctx.rule.attr.hdrs for f in src.files.to_list()]
 
     return srcs
@@ -270,9 +270,34 @@ def _compilation_database_aspect_impl(target, ctx):
     # Write the compile commands for this target to a file, and return
     # the commands for the transitive closure.
 
+    # Collect any aspects from all transitive dependencies.
+    # Note that this should also apply to filegroup type targets which may have
+    # cc_binary targets in their srcs attribute.
+    deps = []
+    if hasattr(ctx.rule.attr, "srcs"):
+        deps.extend(ctx.rule.attr.srcs)
+    if hasattr(ctx.rule.attr, "deps"):
+        deps.extend(ctx.rule.attr.deps)
+
+    transitive_compilation_db = []
+    all_compdb_files = []
+    all_header_files = []
+    for dep in deps:
+        if CompilationAspect not in dep:
+            continue
+        transitive_compilation_db.append(dep[CompilationAspect].compilation_db)
+        all_compdb_files.append(dep[OutputGroupInfo].compdb_files)
+        all_header_files.append(dep[OutputGroupInfo].header_files)
+
     # We support only these rule kinds.
     if ctx.rule.kind not in _all_rules:
-        return []
+        return [
+            CompilationAspect(compilation_db = depset(transitive = transitive_compilation_db)),
+            OutputGroupInfo(
+                compdb_files = depset(transitive = all_compdb_files),
+                header_files = depset(transitive = all_header_files),
+            ),
+        ]
 
     compilation_db = []
 
@@ -286,8 +311,10 @@ def _compilation_database_aspect_impl(target, ctx):
 
     if ctx.rule.kind in _cc_rules:
         compile_commands = _cc_compile_commands(ctx, target, feature_configuration, cc_toolchain)
-    else:
+    elif ctx.rule.kind in _objc_rules:
         compile_commands = _objc_compile_commands(ctx, target, feature_configuration, cc_toolchain)
+    else:
+        fail("unsupported rule: " + ctx.rule.kind)
 
     for compile_command in compile_commands:
         exec_root_marker = "__EXEC_ROOT__"
@@ -302,28 +329,22 @@ def _compilation_database_aspect_impl(target, ctx):
         output = compdb_file,
     )
 
-    # Collect all transitive dependencies.
-    transitive_compilation_db = []
-    all_compdb_files = []
-    for dep in ctx.rule.attr.deps:
-        if CompilationAspect not in dep:
-            continue
-        transitive_compilation_db.append(dep[CompilationAspect].compilation_db)
-        all_compdb_files.append(dep[OutputGroupInfo].compdb_files)
-
     compilation_db = depset(compilation_db, transitive = transitive_compilation_db)
     all_compdb_files = depset([compdb_file], transitive = all_compdb_files)
+    all_header_files.append(target[CcInfo].compilation_context.headers)
 
     return [
         CompilationAspect(compilation_db = compilation_db),
         OutputGroupInfo(
             compdb_files = all_compdb_files,
-            header_files = target[CcInfo].compilation_context.headers,
+            header_files = depset(transitive = all_header_files),
         ),
     ]
 
 compilation_database_aspect = aspect(
-    attr_aspects = ["deps"],
+    # Also include srcs in the attribute aspects so people can use filegroup targets.
+    # See https://github.com/grailbio/bazel-compilation-database/issues/84.
+    attr_aspects = ["srcs", "deps"],
     attrs = {
         "_cc_toolchain": attr.label(
             default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
@@ -331,9 +352,10 @@ compilation_database_aspect = aspect(
         "_xcode_config": attr.label(default = Label("@bazel_tools//tools/osx:current_xcode_config")),
     },
     fragments = ["cpp", "objc", "apple"],
-    required_aspect_providers = [CompilationAspect],
+    provides = [CompilationAspect],
     toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
     implementation = _compilation_database_aspect_impl,
+    apply_to_generating_rules = True,
 )
 
 def _compilation_database_impl(ctx):

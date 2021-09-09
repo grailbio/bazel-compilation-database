@@ -37,10 +37,16 @@ cc_binary(
     srcs = ["stdlib.cc"],
 )
 
+# For testing https://github.com/grailbio/bazel-compilation-database/issues/84.
+filegroup(
+    name = "b_filegrp",
+    srcs = ["b"],
+)
+
 load("@compdb//:aspects.bzl", "compilation_database")
 
 compilation_database(
     name = "compdb",
     exec_root = "__TEST_EXEC_ROOT__",
-    targets = ["b"],
+    targets = ["b_filegrp"],
 )
