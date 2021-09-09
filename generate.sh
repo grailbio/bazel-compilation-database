@@ -14,4 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+>&2 echo "==="
+>&2 echo "WARNING: generate.sh is now deprecated; please use generate.py directly instead"
+>&2 echo "==="
 exec "$(dirname "${BASH_SOURCE[0]}")/generate.py" "$@"

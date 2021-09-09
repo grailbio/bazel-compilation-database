@@ -13,7 +13,7 @@ For more information on compilation database, [Guillaume Papin][sarcasm] has an
 
 ### Entire repo
 
-Running generate.sh script from this project with current directory somewhere
+Running generate.py script from this project with current directory somewhere
 in your bazel workspace will generate a compile_commands.json file in the
 top-level directory of your workspace. You can even symlink the script to
 somewhere in your PATH.
@@ -27,7 +27,7 @@ VERSION="0.5.0"
 (
   cd "${INSTALL_DIR}" \
   && curl -L "https://github.com/grailbio/bazel-compilation-database/archive/${VERSION}.tar.gz" | tar -xz \
-  && ln -f -s "${INSTALL_DIR}/bazel-compilation-database-${VERSION}/generate.sh" bazel-compdb
+  && ln -f -s "${INSTALL_DIR}/bazel-compilation-database-${VERSION}/generate.py" bazel-compdb
 )
 
 bazel-compdb # This will generate compile_commands.json in your workspace root.

@@ -19,7 +19,7 @@ Bazel.
 
 See https://github.com/ycm-core/YouCompleteMe#c-family-semantic-completion for
 how YCM works. In that section:
-For Option 1 (compilation database), use the generate.sh script in this
+For Option 1 (compilation database), use the generate.py script in this
 repository.
 For Option 2 (.ycm_extra_conf.py), symlink this file to the root of your
 workspace and bazel's output_base, or set it as your global config.
