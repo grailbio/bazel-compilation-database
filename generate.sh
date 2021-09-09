@@ -91,18 +91,18 @@ readonly WORKSPACE="$("$BAZEL" info workspace)"
 readonly EXEC_ROOT="$("$BAZEL" info execution_root)"
 readonly COMPDB_FILE="${WORKSPACE}/compile_commands.json"
 
-readonly QUERY_CMD=(
-  "$BAZEL" query
-    --noshow_progress
-    --noshow_loading_progress
-    --output label
-    "kind(\"cc_(library|binary|test|inc_library|proto_library)\", ${query_expr}) union kind(\"objc_(library|binary|test)\", ${query_expr})"
-)
-
 # Clean any previously generated files.
 if [[ -e "${EXEC_ROOT}" ]]; then
   find "${EXEC_ROOT}" -name '*.compile_commands.json' -delete
 fi
+
+patterns_file="$(mktemp)"
+"$BAZEL" query \
+  --noshow_progress \
+  --noshow_loading_progress \
+  --output label \
+  "kind(\"cc_(library|binary|test|inc_library|proto_library)\", ${query_expr}) union kind(\"objc_(library|binary|test)\", ${query_expr})" \
+  >"${patterns_file}"
 
 # shellcheck disable=SC2046
 "$BAZEL" build \
@@ -111,8 +111,10 @@ fi
   "--noshow_progress" \
   "--noshow_loading_progress" \
   "--output_groups=${OUTPUT_GROUPS}" \
+  "--target_pattern_file=${patterns_file}"
   "$@" \
-  $("${QUERY_CMD[@]}") > /dev/null
+  > /dev/null
+rm "${patterns_file}"
 
 echo "[" > "${COMPDB_FILE}"
 find "${EXEC_ROOT}" -name '*.compile_commands.json' -not -empty \
