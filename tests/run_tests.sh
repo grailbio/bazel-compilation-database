@@ -64,5 +64,5 @@ echo
 echo "Checking YCM plugin"
 diff --unified=100 \
   <(sed -e "s@EXECROOT@${execroot}@" -e "s@PWD@${PWD}@" "${expected_ycm}") \
-  <(python ../.ycm_extra_conf.py a.cc)
+  <(python3 ../.ycm_extra_conf.py a.cc)
 echo "SUCCESS!"
