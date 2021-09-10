@@ -21,7 +21,7 @@ somewhere in your PATH.
 For example,
 ```sh
 INSTALL_DIR="/usr/local/bin"
-VERSION="0.5.0"
+VERSION="0.5.1"
 
 # Download and symlink.
 (
@@ -58,15 +58,19 @@ In your WORKSPACE file:
 ```python
 http_archive(
     name = "com_grail_bazel_compdb",
-    strip_prefix = "bazel-compilation-database-0.5.0",
-    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/0.5.0.tar.gz"],
+    strip_prefix = "bazel-compilation-database-0.5.1",
+    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/0.5.1.tar.gz"],
 )
+
+load("@com_grail_bazel_compdb//:deps.bzl", "bazel_compdb_deps")
+bazel_compdb_deps()
 ```
 
 In your BUILD file located in any package:
 ```python
 ## Replace workspace_name and dir_path as per your setup.
-load("@com_grail_bazel_compdb//:aspects.bzl", "compilation_database")
+load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
+load("@com_grail_bazel_output_base_util//:defs.bzl", "OUTPUT_BASE")
 
 compilation_database(
     name = "example_compdb",
@@ -74,12 +78,12 @@ compilation_database(
         "//a_cc_binary_label",
         "//a_cc_library_label",
     ],
-    # [Optional]
-    # If your exec root (value returned by `bazel info execution_root`)
-    # is constant across your users, then you can supply the value here.
-    # Otherwise, the default is `__EXEC_ROOT__` which you can replace in
-    # the output file using `sed` or similar tool (see below).
-    exec_root = "/path/to/bazel/exec_root",
+    # OUTPUT_BASE is a dynamic value that will vary for each user workspace.
+    # If you would like your build outputs to be the same across users, then
+    # skip supplying this value, and substitute the default constant value
+    # "__OUTPUT_BASE__" through an external tool like `sed` or `jq` (see
+    # below shell commands for usage).
+    output_base = OUTPUT_BASE,
 )
 ```
 
@@ -91,9 +95,10 @@ bazel build //path/to/pkg/dir:example_compdb
 # Location of the compilation database file.
 outfile="$(bazel info bazel-bin)/path/to/pkg/dir/compile_commands.json"
 
-# Command to replace the marker for exec_root in the file.
-execroot=$(bazel info execution_root)
-sed -i.bak "s@__EXEC_ROOT__@${execroot}@" "${outfile}"
+# [Optional] Command to replace the marker for output_base in the file if you
+# did not use the dynamic value in the example above.
+output_base=$(bazel info output_base)
+sed -i.bak "s@__OUTPUT_BASE__@${output_base}@" "${outfile}"
 
 # The compilation database is now ready to use at this location.
 echo "Compilation Database: ${outfile}"

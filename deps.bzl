@@ -1,4 +1,4 @@
-# Copyright 2017 GRAIL, Inc.
+# Copyright 2021 GRAIL, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-workspace(name = "com_grail_bazel_compdb_tests")
+load("@com_grail_bazel_compdb//:tools.bzl", "setup_tools")
 
-local_repository(
-    name = "com_grail_bazel_compdb",
-    path = "..",
-)
-
-load("@com_grail_bazel_compdb//:deps.bzl", "bazel_compdb_deps")
-
-bazel_compdb_deps()
+def bazel_compdb_deps():
+    setup_tools()

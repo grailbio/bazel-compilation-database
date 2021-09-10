@@ -29,8 +29,6 @@ check_compdb() {
   jq_want_cmd="${jq_got_cmd}"
   jq_want_cmd+=" | map(.directory = \"${execroot}\")"
   if ! "${full_compdb}"; then
-    # Reset to actual directory only if the directory was set to the execroot we set in the BUILD file.
-    jq_got_cmd+=" | map(.directory = (if .directory == \"__TEST_EXEC_ROOT__\" then \"${execroot}\" else .directory end))"
     # Remove the source file for the target not included in our //:compdb target.
     jq_want_cmd+=" | map(. | select(.file != \"stdlib.cc\"))"
   fi
