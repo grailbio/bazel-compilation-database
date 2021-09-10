@@ -21,7 +21,7 @@ somewhere in your PATH.
 For example,
 ```sh
 INSTALL_DIR="/usr/local/bin"
-VERSION="0.5.1"
+VERSION="0.5.2"
 
 # Download and symlink.
 (
@@ -58,8 +58,8 @@ In your WORKSPACE file:
 ```python
 http_archive(
     name = "com_grail_bazel_compdb",
-    strip_prefix = "bazel-compilation-database-0.5.1",
-    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/0.5.1.tar.gz"],
+    strip_prefix = "bazel-compilation-database-0.5.2",
+    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/0.5.2.tar.gz"],
 )
 
 load("@com_grail_bazel_compdb//:deps.bzl", "bazel_compdb_deps")
