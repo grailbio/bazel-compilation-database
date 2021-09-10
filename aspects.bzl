@@ -81,6 +81,7 @@ def _sources(ctx, target):
     return srcs
 
 # Function copied from https://gist.github.com/oquenchil/7e2c2bd761aa1341b458cc25608da50c
+# TODO: Directly use create_compile_variables and get_memory_inefficient_command_line.
 def _get_compile_flags(dep):
     options = []
     compilation_context = dep[CcInfo].compilation_context
@@ -293,6 +294,7 @@ def _compilation_database_aspect_impl(target, ctx):
             OutputGroupInfo(
                 compdb_files = depset(transitive = all_compdb_files),
                 header_files = depset(transitive = all_header_files),
+                direct_src_files = [],
             ),
         ]
 
@@ -313,11 +315,13 @@ def _compilation_database_aspect_impl(target, ctx):
     else:
         fail("unsupported rule: " + ctx.rule.kind)
 
+    srcs = []
     for compile_command in compile_commands:
         exec_root_marker = "__EXEC_ROOT__"
         compilation_db.append(
             struct(command = compile_command.cmdline, directory = exec_root_marker, file = compile_command.src.path),
         )
+        srcs.append(compile_command.src)
 
     # Write the commands for this target.
     compdb_file = ctx.actions.declare_file(ctx.label.name + ".compile_commands.json")
@@ -335,6 +339,11 @@ def _compilation_database_aspect_impl(target, ctx):
         OutputGroupInfo(
             compdb_files = all_compdb_files,
             header_files = depset(transitive = all_header_files),
+            # Provide direct src files of this target for people who want to
+            # run clang-tidy or similar tools with the compilation database
+            # on the source files of this target.
+            # See https://github.com/grailbio/bazel-compilation-database/pull/53.
+            direct_src_files = srcs,
         ),
     ]
 
