@@ -10,6 +10,14 @@ and I will be very happy to redirect people to your repository. If you would
 like to continue contributing to this repository, please let me know and I can
 give you write access.
 
+#### Forks:
+
+- TBD
+
+#### Alternative/Derived implementations:
+
+- https://github.com/stackb/bazel-stack-vscode-cc
+
 ====
 
 If you use [Bazel][bazel] and want to use libclang based editors and tools, you
