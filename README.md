@@ -16,6 +16,8 @@ give you write access.
 
 #### Alternative/Derived implementations:
 
+- https://github.com/hedronvision/bazel-compile-commands-extractor
+  - Uses an alternate approach based on aquery. This directly asks Bazel for its exact build commands, while still being fast and not requiring a full build. Avoids whole categories of issues.
 - https://github.com/stackb/bazel-stack-vscode-cc
 
 ====
