@@ -33,6 +33,12 @@ check_compdb() {
     jq_want_cmd+=" | map(. | select(.file != \"stdlib.cc\"))"
   fi
 
+  # Check jq is installed.
+  if ! command -v jq >/dev/null; then
+    >&2 echo "jq not installed; aborting."
+    exit 1
+  fi
+
   diff --unified=100 <(jq "${jq_want_cmd}" "${want}") <(jq "${jq_got_cmd}" "${got}")
   test -f bazel-bin/_virtual_includes/a/dir_a/a.h
 }

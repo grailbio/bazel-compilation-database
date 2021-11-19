@@ -1,21 +1,21 @@
 [
   {
-    "command": "external/local_config_cc/cc_wrapper.sh -U_FORTIFY_SOURCE -fstack-protector -Wall -Wthread-safety -Wself-assign -fcolor-diagnostics -fno-omit-frame-pointer -std=c++0x -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\" -I bazel-out/darwin-fastbuild/bin/_virtual_includes/a -iquote . -iquote bazel-out/darwin-fastbuild/bin -x c++ -c b.cc",
+    "command": "external/local_config_cc/cc_wrapper.sh -U_FORTIFY_SOURCE -fstack-protector -Wall -Wthread-safety -Wself-assign -Wno-free-nonheap-object -fcolor-diagnostics -fno-omit-frame-pointer -std=c++0x -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\" -I bazel-out/darwin-fastbuild/bin/_virtual_includes/a -iquote . -iquote bazel-out/darwin-fastbuild/bin -x c++ -c b.cc",
     "directory": "EXECROOT",
     "file": "b.cc"
   },
   {
-    "command": "external/local_config_cc/cc_wrapper.sh -U_FORTIFY_SOURCE -fstack-protector -Wall -Wthread-safety -Wself-assign -fcolor-diagnostics -fno-omit-frame-pointer -std=c++0x -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\" -iquote . -iquote bazel-out/darwin-fastbuild/bin -iquote external/bazel_tools -iquote bazel-out/darwin-fastbuild/bin/external/bazel_tools -x c++ -c stdlib.cc",
+    "command": "external/local_config_cc/cc_wrapper.sh -U_FORTIFY_SOURCE -fstack-protector -Wall -Wthread-safety -Wself-assign -Wno-free-nonheap-object -fcolor-diagnostics -fno-omit-frame-pointer -std=c++0x -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\" -iquote . -iquote bazel-out/darwin-fastbuild/bin -iquote external/bazel_tools -iquote bazel-out/darwin-fastbuild/bin/external/bazel_tools -x c++ -c stdlib.cc",
     "directory": "EXECROOT",
     "file": "stdlib.cc"
   },
   {
-    "command": "external/local_config_cc/cc_wrapper.sh -U_FORTIFY_SOURCE -fstack-protector -Wall -Wthread-safety -Wself-assign -fcolor-diagnostics -fno-omit-frame-pointer -std=c++0x -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\" -I bazel-out/darwin-fastbuild/bin/_virtual_includes/a -iquote . -iquote bazel-out/darwin-fastbuild/bin -x c++ -c a.cc",
+    "command": "external/local_config_cc/cc_wrapper.sh -U_FORTIFY_SOURCE -fstack-protector -Wall -Wthread-safety -Wself-assign -Wno-free-nonheap-object -fcolor-diagnostics -fno-omit-frame-pointer -std=c++0x -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\" -I bazel-out/darwin-fastbuild/bin/_virtual_includes/a -iquote . -iquote bazel-out/darwin-fastbuild/bin -x c++ -c a.cc",
     "directory": "EXECROOT",
     "file": "a.cc"
   },
   {
-    "command": "external/local_config_cc/cc_wrapper.sh -U_FORTIFY_SOURCE -fstack-protector -Wall -Wthread-safety -Wself-assign -fcolor-diagnostics -fno-omit-frame-pointer -std=c++0x -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\" -I bazel-out/darwin-fastbuild/bin/_virtual_includes/a -iquote . -iquote bazel-out/darwin-fastbuild/bin -x c++ -c a.h",
+    "command": "external/local_config_cc/cc_wrapper.sh -U_FORTIFY_SOURCE -fstack-protector -Wall -Wthread-safety -Wself-assign -Wno-free-nonheap-object -fcolor-diagnostics -fno-omit-frame-pointer -std=c++0x -no-canonical-prefixes -Wno-builtin-macro-redefined -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\" -I bazel-out/darwin-fastbuild/bin/_virtual_includes/a -iquote . -iquote bazel-out/darwin-fastbuild/bin -x c++ -c a.h",
     "directory": "EXECROOT",
     "file": "a.h"
   }
