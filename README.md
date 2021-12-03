@@ -58,6 +58,10 @@ bazel-compdb -s -- [additional flags for bazel]
 # 2. To consider only targets given by a specific query pattern, say `//cc/...`. Also see below section for another way.
 bazel-compdb -q //cc/...
 bazel-compdb -q //cc/... -- [additional flags for bazel]
+# 3. To pass arguments that you want to execute on every bazel command use -r flag if argument contain at the beginning of it
+# use -r=<argument> to pass each new argument passed that way would append list of previous
+bazel-compdb -r=--first -r=--second
+bazel-compdb -r=--first -r=--second -- [additional flags for bazel]
 ```
 
 ### Selected targets

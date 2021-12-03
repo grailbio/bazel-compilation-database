@@ -34,12 +34,12 @@ _BAZEL = os.getenv("BAZEL_COMPDB_BAZEL_PATH") or "bazel"
 _OUTPUT_GROUPS = "compdb_files,header_files"
 
 
-def bazel_info():
+def bazel_info(extra_args = []):
     """Returns a dict containing key values from bazel info."""
 
     bazel_info_dict = dict()
     try:
-        out = subprocess.check_output([_BAZEL, 'info']).decode('utf-8').strip().split('\n')
+        out = subprocess.check_output([_BAZEL, 'info'] + extra_args).decode('utf-8').strip().split('\n')
     except subprocess.CalledProcessError as err:
         # This exit code is returned when this command is run outside of a bazel workspace.
         if err.returncode == 2:
@@ -58,6 +58,9 @@ if __name__ == "__main__":
                         help="use the original source directory instead of bazel execroot")
     parser.add_argument("-q", "--query_expr", default="//...",
                         help="bazel query expr to find targets")
+    parser.add_argument("-r", "--required_args", action="append",
+                        help="args which is executing with every bazel command.\n \
+                            If arg include -- at the begining use -r=<arg> to pass")
     parser.add_argument('bazel_args', nargs=argparse.REMAINDER,
                         help="")
     args = parser.parse_args()
@@ -69,19 +72,18 @@ if __name__ == "__main__":
             raise Exception(msg)
         user_build_args = args.bazel_args[1:] # Ignore the first '--'
 
-    bazel_info_dict = bazel_info()
+    bazel_info_dict = bazel_info(args.required_args)
     bazel_exec_root = bazel_info_dict['execution_root']
     bazel_workspace = bazel_info_dict['workspace']
     compdb_file = os.path.join(bazel_workspace, "compile_commands.json")
 
     os.chdir(bazel_workspace)
 
-    aspects_dir = os.path.dirname(os.path.realpath(__file__))
-
     query = ('kind("cc_(library|binary|test|inc_library|proto_library)", {query_expr}) ' +
              'union kind("objc_(library|binary|test)", {query_expr})').format(
                  query_expr=args.query_expr)
     query_cmd = [_BAZEL, 'query']
+    query_cmd.extend(args.required_args)
     query_cmd.extend(['--noshow_progress', '--noshow_loading_progress', '--output=label'])
     query_cmd.append(query)
 
@@ -93,16 +95,15 @@ if __name__ == "__main__":
         os.remove(db)
 
     build_args = [
-        '--override_repository=bazel_compdb={}'.format(aspects_dir),
-        '--aspects=@bazel_compdb//:aspects.bzl%compilation_database_aspect',
+        '--aspects=@com_grail_bazel_compdb//:aspects.bzl%compilation_database_aspect',
         '--noshow_progress',
         '--noshow_loading_progress',
         '--output_groups={}'.format(_OUTPUT_GROUPS),
         '--target_pattern_file={}'.format(targets_file.name),
     ]
     build_cmd = [_BAZEL, 'build']
+    build_cmd.extend(args.required_args)
     build_cmd.extend(build_args)
-    build_cmd.extend(user_build_args)
     subprocess.check_call(build_cmd, stdout=subprocess.DEVNULL)
 
     targets_file.close()
