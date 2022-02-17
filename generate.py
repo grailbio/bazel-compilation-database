@@ -27,6 +27,7 @@ import os
 import pathlib
 import subprocess
 import tempfile
+import sys
 
 
 _BAZEL = os.getenv("BAZEL_COMPDB_BAZEL_PATH") or "bazel"
@@ -118,6 +119,10 @@ if __name__ == "__main__":
         if 'command' in db_entry:
             db_entry['command'] = (
                 db_entry['command'].replace('-isysroot __BAZEL_XCODE_SDKROOT__', ''))
+            db_entry['command'] = (
+                db_entry['command'].replace('-fno-canonical-system-headers', ''))
+            db_entry['command'] = (
+                db_entry['command'].replace('-fcanonical-system-headers', ''))
         return db_entry
     db_entries = list(map(replace_execroot_marker, db_entries))
 
