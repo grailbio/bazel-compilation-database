@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     # Clean any previously generated files.
     for db in pathlib.Path(bazel_exec_root).glob('**/*.compile_commands.json'):
-        os.remove(db)
+        db.unlink()
 
     build_args = [
         '--override_repository=bazel_compdb={}'.format(aspects_dir),
