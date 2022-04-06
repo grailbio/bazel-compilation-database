@@ -79,8 +79,8 @@ if __name__ == "__main__":
 
     aspects_dir = os.path.dirname(os.path.realpath(__file__))
 
-    query = ('kind("cc_(library|binary|test|inc_library|proto_library)", {query_expr}) ' +
-             'union kind("objc_(library|binary|test)", {query_expr})').format(
+    query = ('kind("^cc_(library|binary|test|inc_library|proto_library)", {query_expr}) ' +
+             'union kind("^objc_(library|binary|test)", {query_expr})').format(
                  query_expr=args.query_expr)
     query_cmd = [_BAZEL, 'query']
     query_cmd.extend(['--noshow_progress', '--noshow_loading_progress', '--output=label'])
