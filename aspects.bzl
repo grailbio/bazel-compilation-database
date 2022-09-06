@@ -63,6 +63,11 @@ _objc_rules = [
 
 _all_rules = _cc_rules + _objc_rules
 
+# Disable features not supported by the toolchain
+DISABLED_FEATURES = [
+    "module_maps",
+]
+
 def _is_cpp_target(srcs):
     if all([src.extension in _c_or_cpp_header_extensions for src in srcs]):
         return True  # assume header-only lib is c++
@@ -306,7 +311,7 @@ def _compilation_database_aspect_impl(target, ctx):
         ctx = ctx,
         cc_toolchain = cc_toolchain,
         requested_features = ctx.features,
-        unsupported_features = ctx.disabled_features,
+        unsupported_features = ctx.disabled_features + DISABLED_FEATURES,
     )
 
     if ctx.rule.kind in _cc_rules:
