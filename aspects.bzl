@@ -63,7 +63,7 @@ _objc_rules = [
 
 _all_rules = _cc_rules + _objc_rules
 
-# Disable features not supported by the toolchain
+# Temporary fix for https://github.com/grailbio/bazel-compilation-database/issues/101.
 DISABLED_FEATURES = [
     "module_maps",
 ]
