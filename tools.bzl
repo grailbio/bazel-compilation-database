@@ -13,16 +13,18 @@
 # limitations under the License.
 
 def _bazel_output_base_util_impl(rctx):
-    if rctx.os.name.lower().startswith("windows") == True:
+    if rctx.os.name.lower().startswith("windows"):
         res = rctx.execute(["cmd", "/c", "echo", "%cd%"])
-    else:
+    elif rctx.os.name.startswith("linux"):
         res = rctx.execute(["pwd"])
+    else:
+        fail("unknown operating system: {}".format(rctx.os.name))
 
     if res.return_code != 0:
         fail("getting output base failed (%d): %s" % (res.return_code, res.stderr))
 
     # Strip last two path components.
-    if rctx.os.name.lower().startswith("windows") == True:
+    if rctx.os.name.lower().startswith("windows"):
         path_components = res.stdout.rstrip("\n").split("\\")[:-2]
     else:
         path_components = res.stdout.rstrip("\n").split("/")[:-2]
