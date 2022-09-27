@@ -285,12 +285,14 @@ def _objc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
         ))
     return compile_commands
 
+# Copied from https://github.com/cloudhan/rules_cuda/blob/19f91525682511a2825037e3ac568cba22329733/cuda/private/cuda_helper.bzl
 def _check_src_extension(file, allowed_src_files):
     for pattern in allowed_src_files:
         if file.basename.endswith(pattern):
             return True
     return False
 
+# Copied from https://github.com/cloudhan/rules_cuda/blob/19f91525682511a2825037e3ac568cba22329733/cuda/private/cuda_helper.bzl
 def _check_srcs_extensions(ctx, allowed_src_files, rule_name):
     for src in ctx.rule.attr.srcs:
         files = src[DefaultInfo].files.to_list()
@@ -306,11 +308,13 @@ def _check_srcs_extensions(ctx, allowed_src_files, rule_name):
             if not at_least_one_good:
                 fail("'{}' does not produce any {} srcs files".format(str(src.label), rule_name), attr = "srcs")
 
+# Copied from https://github.com/cloudhan/rules_cuda/blob/19f91525682511a2825037e3ac568cba22329733/cuda/private/cuda_helper.bzl
 def _resolve_workspace_root_includes(ctx):
     src_path = paths.normalize(ctx.label.workspace_root)
     bin_path = paths.normalize(paths.join(ctx.bin_dir.path, src_path))
     return src_path, bin_path
 
+# Copied from https://github.com/cloudhan/rules_cuda/blob/19f91525682511a2825037e3ac568cba22329733/cuda/private/cuda_helper.bzl
 def _resolve_includes(ctx, path):
     if paths.is_absolute(path):
         fail("invalid absolute path", path)
@@ -319,6 +323,7 @@ def _resolve_includes(ctx, path):
     bin_path = paths.join(ctx.bin_dir.path, src_path)
     return src_path, bin_path
 
+# Copied from https://github.com/cloudhan/rules_cuda/blob/19f91525682511a2825037e3ac568cba22329733/cuda/private/cuda_helper.bzl
 def _check_opts(opt):
     opt = opt.strip()
     if (opt.startswith("--generate-code") or opt.startswith("-gencode") or
@@ -339,9 +344,11 @@ def _check_opts(opt):
         fail(opt, "is not allowed to be specified directly via copts")
     return True
 
+# Copied from https://github.com/cloudhan/rules_cuda/blob/19f91525682511a2825037e3ac568cba22329733/cuda/private/cuda_helper.bzl
 def _get_cuda_archs_info(ctx):
     return ctx.rule.attr._default_cuda_archs[CudaArchsInfo]
 
+# Copied from https://github.com/cloudhan/rules_cuda/blob/19f91525682511a2825037e3ac568cba22329733/cuda/private/cuda_helper.bzl
 def _create_common_info(
         cuda_archs_info = None,
         includes = [],
@@ -378,6 +385,7 @@ def _create_common_info(
         transitive_linking_contexts = transitive_linking_contexts,
     )
 
+# Copied from https://github.com/cloudhan/rules_cuda/blob/19f91525682511a2825037e3ac568cba22329733/cuda/private/cuda_helper.bzl
 def _create_common(ctx):
     """Helper to gather and process various information from `ctx` object to ease the parameter passing for internal macros.
 
@@ -462,6 +470,7 @@ def _create_common(ctx):
         transitive_linking_contexts = transitive_linking_contexts,
     )
 
+# Copied from https://github.com/cloudhan/rules_cuda/blob/19f91525682511a2825037e3ac568cba22329733/cuda/private/cuda_helper.bzl
 def _get_all_unsupported_features(ctx, cuda_toolchain, unsupported_features):
     all_unsupported = list(ctx.disabled_features)
     all_unsupported.extend([f[1:] for f in ctx.rule.attr.features if f.startswith("-")])
@@ -469,6 +478,7 @@ def _get_all_unsupported_features(ctx, cuda_toolchain, unsupported_features):
         all_unsupported.extend(unsupported_features)
     return unique(all_unsupported)
 
+# Copied from https://github.com/cloudhan/rules_cuda/blob/19f91525682511a2825037e3ac568cba22329733/cuda/private/cuda_helper.bzl
 def _get_all_requested_features(ctx, cuda_toolchain, requested_features):
     all_features = []
     compilation_mode = ctx.var.get("COMPILATION_MODE", None)
@@ -489,6 +499,7 @@ def _get_all_requested_features(ctx, cuda_toolchain, requested_features):
 
     return all_features
 
+# Copied from https://github.com/cloudhan/rules_cuda/blob/19f91525682511a2825037e3ac568cba22329733/cuda/private/cuda_helper.bzl
 def _configure_features(ctx, cuda_toolchain, requested_features = None, unsupported_features = None, _debug = False):
     all_requested_features = _get_all_requested_features(ctx, cuda_toolchain, requested_features)
     all_unsupported_features = _get_all_unsupported_features(ctx, cuda_toolchain, unsupported_features)
