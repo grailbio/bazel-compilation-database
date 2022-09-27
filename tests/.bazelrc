@@ -1,0 +1,16 @@
+build --enable_platform_specific_config
+
+build:windows --copt=/std:c++17
+
+build --flag_alias=enable_cuda=@rules_cuda//cuda:enable
+build --flag_alias=cuda_compiler=@rules_cuda//cuda:compiler
+build --flag_alias=cuda_archs=@rules_cuda//cuda:archs
+build --flag_alias=cuda_copts=@rules_cuda//cuda:copts
+
+build:cuda --enable_cuda=True
+build:cuda --cuda_compiler=nvcc
+build:cuda --cuda_archs=sm_60;sm_75;sm_86
+
+build:cuda --cuda_copts=-std=c++17,-extended-lambda,-Xcudafe="--diag_suppress=unsigned_compare_with_zero",-Xcompiler=/std:c++17,-Xcompiler=/utf-8,-Xcompiler=/Zc:preprocessor
+
+build --config=cuda

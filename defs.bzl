@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("@com_grail_bazel_compdb//:aspects.bzl", "CompilationAspect", "compilation_database_aspect")
+load("@com_grail_bazel_config_compdb//:config.bzl", "cuda_enable", "cuda_path", "global_filter_flags")
 
 def _compilation_database_impl(ctx):
     # Generates a single compile_commands.json file with the
@@ -20,7 +21,7 @@ def _compilation_database_impl(ctx):
 
     if ctx.attr.disable:
         ctx.actions.write(output = ctx.outputs.filename, content = "[]\n")
-        return
+        return []
 
     compilation_db = []
     all_headers = []
@@ -33,10 +34,24 @@ def _compilation_database_impl(ctx):
 
     exec_root = ctx.attr.output_base + "/execroot/" + ctx.workspace_name
 
+    # to_list() will return a list of the elements, without duplicates.
     content = json.encode(compilation_db.to_list())
     content = content.replace("__EXEC_ROOT__", exec_root)
-    content = content.replace("-isysroot __BAZEL_XCODE_SDKROOT__", "")
+
+    for flag in global_filter_flags:
+        content = content.replace(flag, "")
+    for flag in ctx.attr.filter_flags:
+        content = content.replace(flag, "")
+
+    # Format json.
+    content = "},\n".join(content.split("},"))
+    content = content.replace("[", "[\n")
+    content = content.replace("]", "\n]\n")
+
     ctx.actions.write(output = ctx.outputs.filename, content = content)
+    if cuda_enable:
+        content = "CompileFlags:\n\tAdd:\n\t[\n\t\t'--cuda-path=%s'\n\t]\n" % cuda_path
+        ctx.actions.write(output = ctx.outputs.cuda_path, content = content)
 
     return [
         OutputGroupInfo(
@@ -65,6 +80,13 @@ _compilation_database = rule(
         "filename": attr.output(
             doc = "Name of the generated compilation database.",
         ),
+        "filter_flags": attr.string_list(
+            default = [],
+            doc = "Filter the flags in the compilation command that clang does not support.",
+        ),
+        "cuda_path": attr.output(
+            doc = "clangd configuration information.",
+        ),
     },
     implementation = _compilation_database_impl,
 )
@@ -72,5 +94,6 @@ _compilation_database = rule(
 def compilation_database(**kwargs):
     _compilation_database(
         filename = kwargs.pop("filename", "compile_commands.json"),
+        cuda_path = kwargs.pop("cuda_path", ".clangd"),
         **kwargs
     )

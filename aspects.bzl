@@ -30,6 +30,7 @@ load(
     "OBJCPP_COMPILE_ACTION_NAME",
     "OBJC_COMPILE_ACTION_NAME",
 )
+load("@com_grail_bazel_config_compdb//:config.bzl", "ACTION_NAMES", "ALLOW_CUDA_HDRS", "ALLOW_CUDA_SRCS", "BuildSettingInfo", "CudaArchsInfo", "CudaInfo", "config_helper", "cuda_enable", "cuda_helper", "cuda_path", "find_cuda_toolchain", "paths", "unique", "use_cuda_toolchain")
 
 CompilationAspect = provider()
 
@@ -61,7 +62,11 @@ _objc_rules = [
     "objc_binary",
 ]
 
-_all_rules = _cc_rules + _objc_rules
+_cuda_rules = [
+    "cuda_library",
+]
+
+_all_rules = _cc_rules + _objc_rules + _cuda_rules
 
 # Temporary fix for https://github.com/grailbio/bazel-compilation-database/issues/101.
 DISABLED_FEATURES = [
@@ -179,8 +184,18 @@ def _cc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
 
     compile_flags.extend(ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else [])
 
+    # Add automatically `-std=` compilation command for clang.
+    # Only take effect on the first matched value.
+    value = None
+    for option in compiler_options:
+        if option.find("/std:") != -1:
+            start = option.index("/std:")
+            value = "-std=" + option[start + 5:start + 10]
+
     cmdline_list = [compiler]
     cmdline_list.extend(compiler_options)
+    if value != None:
+        cmdline_list.append(value)
     cmdline_list.extend(compile_flags)
     cmdline = " ".join(cmdline_list)
 
@@ -269,6 +284,298 @@ def _objc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
         ))
     return compile_commands
 
+def _check_src_extension(file, allowed_src_files):
+    for pattern in allowed_src_files:
+        if file.basename.endswith(pattern):
+            return True
+    return False
+
+def _check_srcs_extensions(ctx, allowed_src_files, rule_name):
+    for src in ctx.rule.attr.srcs:
+        files = src[DefaultInfo].files.to_list()
+        if len(files) == 1 and files[0].is_source:
+            if not _check_src_extension(files[0], allowed_src_files) and not files[0].is_directory:
+                fail("in srcs attribute of {} rule {}: source file '{}' is misplaced here".format(rule_name, ctx.label, str(src.label)))
+        else:
+            at_least_one_good = False
+            for file in files:
+                if _check_src_extension(file, allowed_src_files) or file.is_directory:
+                    at_least_one_good = True
+                    break
+            if not at_least_one_good:
+                fail("'{}' does not produce any {} srcs files".format(str(src.label), rule_name), attr = "srcs")
+
+def _resolve_workspace_root_includes(ctx):
+    src_path = paths.normalize(ctx.label.workspace_root)
+    bin_path = paths.normalize(paths.join(ctx.bin_dir.path, src_path))
+    return src_path, bin_path
+
+def _resolve_includes(ctx, path):
+    if paths.is_absolute(path):
+        fail("invalid absolute path", path)
+
+    src_path = paths.normalize(paths.join(ctx.label.workspace_root, ctx.label.package, path))
+    bin_path = paths.join(ctx.bin_dir.path, src_path)
+    return src_path, bin_path
+
+def _check_opts(opt):
+    opt = opt.strip()
+    if (opt.startswith("--generate-code") or opt.startswith("-gencode") or
+        opt.startswith("--gpu-architecture") or opt.startswith("-arch") or
+        opt.startswith("--gpu-code") or opt.startswith("-code") or
+        opt.startswith("--relocatable-device-code") or opt.startswith("-rdc") or
+        opt.startswith("--cuda") or opt.startswith("-cuda") or
+        opt.startswith("--preprocess") or opt.startswith("-E") or
+        opt.startswith("--compile") or opt.startswith("-c") or
+        opt.startswith("--cubin") or opt.startswith("-cubin") or
+        opt.startswith("--ptx") or opt.startswith("-ptx") or
+        opt.startswith("--fatbin") or opt.startswith("-fatbin") or
+        opt.startswith("--device-link") or opt.startswith("-dlink") or
+        opt.startswith("--lib") or opt.startswith("-lib") or
+        opt.startswith("--generate-dependencies") or opt.startswith("-M") or
+        opt.startswith("--generate-nonsystem-dependencies") or opt.startswith("-MM") or
+        opt.startswith("--run") or opt.startswith("-run")):
+        fail(opt, "is not allowed to be specified directly via copts")
+    return True
+
+def _get_cuda_archs_info(ctx):
+    return ctx.rule.attr._default_cuda_archs[CudaArchsInfo]
+
+def _create_common_info(
+        cuda_archs_info = None,
+        includes = [],
+        quote_includes = [],
+        system_includes = [],
+        headers = [],
+        transitive_headers = [],
+        defines = [],
+        local_defines = [],
+        compile_flags = [],
+        link_flags = [],
+        host_defines = [],
+        host_local_defines = [],
+        host_compile_flags = [],
+        host_link_flags = [],
+        ptxas_flags = [],
+        transitive_linking_contexts = []):
+    return struct(
+        cuda_archs_info = cuda_archs_info,
+        includes = includes,
+        quote_includes = quote_includes,
+        system_includes = system_includes,
+        headers = depset(headers, transitive = transitive_headers),
+        defines = defines,
+        local_defines = local_defines,
+        compile_flags = compile_flags,
+        link_flags = link_flags,
+        host_defines = host_defines,
+        host_local_defines = host_local_defines,
+        host_compile_flags = host_compile_flags,
+        host_link_flags = host_link_flags,
+        ptxas_flags = ptxas_flags,
+        transitive_linker_inputs = [ctx.linker_inputs for ctx in transitive_linking_contexts],
+        transitive_linking_contexts = transitive_linking_contexts,
+    )
+
+def _create_common(ctx):
+    """Helper to gather and process various information from `ctx` object to ease the parameter passing for internal macros.
+
+    See `cuda_helper.create_common_info` what information a common object encapsulates.
+    """
+    attr = ctx.rule.attr
+
+    # gather include info
+    includes = []
+    system_includes = []
+    quote_includes = []
+    quote_includes.extend(_resolve_workspace_root_includes(ctx))
+    for inc in attr.includes:
+        system_includes.extend(_resolve_includes(ctx, inc))
+    for dep in attr.deps:
+        if CcInfo in dep:
+            includes.extend(dep[CcInfo].compilation_context.includes.to_list())
+            system_includes.extend(dep[CcInfo].compilation_context.system_includes.to_list())
+            quote_includes.extend(dep[CcInfo].compilation_context.quote_includes.to_list())
+
+    # gather header info
+    public_headers = []
+    private_headers = []
+    for fs in attr.hdrs:
+        public_headers.extend(fs.files.to_list())
+    for fs in attr.srcs:
+        hdr = [f for f in fs.files.to_list() if _check_src_extension(f, ALLOW_CUDA_HDRS)]
+        private_headers.extend(hdr)
+    headers = public_headers + private_headers
+    transitive_headers = []
+    for dep in attr.deps:
+        if CcInfo in dep:
+            transitive_headers.append(dep[CcInfo].compilation_context.headers)
+
+    # gather linker info
+    builtin_linking_contexts = []
+    if hasattr(attr, "_builtin_deps"):
+        builtin_linking_contexts = [dep[CcInfo].linking_context for dep in attr._builtin_deps if CcInfo in dep]
+
+    transitive_linking_contexts = [dep[CcInfo].linking_context for dep in attr.deps if CcInfo in dep]
+    transitive_linking_contexts.extend(builtin_linking_contexts)
+
+    # gather compile info
+    defines = []
+    local_defines = [i for i in attr.local_defines]
+    compile_flags = attr._default_host_copts[BuildSettingInfo].value + [o for o in attr.copts if _check_opts(o)]
+    link_flags = []
+    if hasattr(attr, "linkopts"):
+        link_flags.extend([o for o in attr.linkopts if _check_opts(o)])
+    host_defines = []
+    host_local_defines = [i for i in attr.host_local_defines]
+    host_compile_flags = [i for i in attr.host_copts]
+    host_link_flags = []
+    if hasattr(attr, "host_linkopts"):
+        host_link_flags.extend([i for i in attr.host_linkopts])
+    for dep in attr.deps:
+        if CudaInfo in dep:
+            defines.extend(dep[CudaInfo].defines.to_list())
+        if CcInfo in dep:
+            host_defines.extend(dep[CcInfo].compilation_context.defines.to_list())
+    defines.extend(attr.defines)
+    host_defines.extend(attr.host_defines)
+
+    ptxas_flags = [o for o in attr.ptxasopts if _check_opts(o)]
+
+    return _create_common_info(
+        cuda_archs_info = _get_cuda_archs_info(ctx),
+        includes = includes,
+        quote_includes = quote_includes,
+        system_includes = system_includes,
+        headers = headers,
+        transitive_headers = transitive_headers,
+        defines = defines,
+        local_defines = local_defines,
+        compile_flags = compile_flags,
+        link_flags = link_flags,
+        host_defines = host_defines,
+        host_local_defines = host_local_defines,
+        host_compile_flags = host_compile_flags,
+        host_link_flags = host_link_flags,
+        ptxas_flags = ptxas_flags,
+        transitive_linking_contexts = transitive_linking_contexts,
+    )
+
+def _get_all_unsupported_features(ctx, cuda_toolchain, unsupported_features):
+    all_unsupported = list(ctx.disabled_features)
+    all_unsupported.extend([f[1:] for f in ctx.rule.attr.features if f.startswith("-")])
+    if unsupported_features != None:
+        all_unsupported.extend(unsupported_features)
+    return unique(all_unsupported)
+
+def _get_all_requested_features(ctx, cuda_toolchain, requested_features):
+    all_features = []
+    compilation_mode = ctx.var.get("COMPILATION_MODE", None)
+    if compilation_mode == None:
+        compilation_mode = "opt"
+    all_features.append(compilation_mode)
+
+    all_features.extend(ctx.features)
+    all_features.extend([f for f in ctx.rule.attr.features if not f.startswith("-")])
+    all_features.extend(requested_features)
+    all_features = unique(all_features)
+
+    # https://github.com/bazelbuild/bazel/blob/41feb616ae/src/main/java/com/google/devtools/build/lib/rules/cpp/CcCommon.java#L953-L967
+    if "static_link_msvcrt" in all_features:
+        all_features.append("static_link_msvcrt_debug" if compilation_mode == "dbg" else "static_link_msvcrt_no_debug")
+    else:
+        all_features.append("dynamic_link_msvcrt_debug" if compilation_mode == "dbg" else "dynamic_link_msvcrt_no_debug")
+
+    return all_features
+
+def _configure_features(ctx, cuda_toolchain, requested_features = None, unsupported_features = None, _debug = False):
+    all_requested_features = _get_all_requested_features(ctx, cuda_toolchain, requested_features)
+    all_unsupported_features = _get_all_unsupported_features(ctx, cuda_toolchain, unsupported_features)
+    return config_helper.configure_features(
+        selectables_info = cuda_toolchain.selectables_info,
+        requested_features = all_requested_features,
+        unsupported_features = all_unsupported_features,
+        _debug = _debug,
+    )
+
+def _cuda_compile_commands(ctx, target, cc_toolchain):
+    for cuda_rule in _cuda_rules:
+        _check_srcs_extensions(ctx, ALLOW_CUDA_SRCS + ALLOW_CUDA_HDRS, cuda_rule)
+
+    cuda_toolchain = find_cuda_toolchain(ctx)
+    cuda_common = _create_common(ctx)
+    feature_configuration = _configure_features(
+        ctx = ctx,
+        cuda_toolchain = cuda_toolchain,
+        requested_features = ctx.features + [ACTION_NAMES.cuda_compile],
+        unsupported_features = ctx.disabled_features + DISABLED_FEATURES,
+    )
+
+    compile_flags = []
+    for define in cuda_common.defines:
+        compile_flags.append("-D\"{}\"".format(define))
+
+    for define in cuda_common.local_defines:
+        compile_flags.append("-D\"{}\"".format(define))
+
+    for system_include in cuda_common.system_includes:
+        if len(system_include) == 0:
+            system_include = "."
+        compile_flags.append("-isystem {}".format(system_include))
+
+    for include in cuda_common.includes:
+        if len(include) == 0:
+            include = "."
+        compile_flags.append("-I {}".format(include))
+
+    for quote_include in cuda_common.quote_includes:
+        if len(quote_include) == 0:
+            quote_include = "."
+        compile_flags.append("-iquote {}".format(quote_include))
+
+    host_compiler = cc_toolchain.compiler_executable
+    cuda_compiler = cuda_toolchain.compiler_executable
+
+    srcs = _sources(ctx, target)
+
+    compiler_options = None
+    compile_variables = cuda_helper.create_compile_variables(
+        feature_configuration = feature_configuration,
+        cuda_toolchain = cuda_toolchain,
+        compile_flags = cuda_common.compile_flags,
+        cuda_archs_info = cuda_common.cuda_archs_info,
+        host_compiler = host_compiler,
+        # No need for source_file and output_file.
+        source_file = "",
+        output_file = "",
+    )
+
+    compiler_options = cuda_helper.get_command_line(
+        info = feature_configuration,
+        action = ACTION_NAMES.cuda_compile,
+        value = compile_variables,
+    )
+
+    # No need for source_file and output_file.
+    compiler_options.remove("-o")
+    compiler_options.remove("")
+    compiler_options.remove("-c")
+    compiler_options.remove("")
+
+    cmdline_list = [cuda_compiler]
+    cmdline_list.extend(compiler_options)
+    cmdline_list.extend(compile_flags)
+    cmdline_list.append("-cuda-path=%s" % cuda_path)
+    cmdline = " ".join(cmdline_list)
+
+    compile_commands = []
+    for src in srcs:
+        compile_commands.append(struct(
+            cmdline = cmdline + " -c " + src.path,
+            src = src,
+        ))
+    return compile_commands
+
 def _compilation_database_aspect_impl(target, ctx):
     # Write the compile commands for this target to a file, and return
     # the commands for the transitive closure.
@@ -318,6 +625,8 @@ def _compilation_database_aspect_impl(target, ctx):
         compile_commands = _cc_compile_commands(ctx, target, feature_configuration, cc_toolchain)
     elif ctx.rule.kind in _objc_rules:
         compile_commands = _objc_compile_commands(ctx, target, feature_configuration, cc_toolchain)
+    elif cuda_enable and ctx.rule.kind in _cuda_rules:
+        compile_commands = _cuda_compile_commands(ctx = ctx, target = target, cc_toolchain = cc_toolchain)
     else:
         fail("unsupported rule: " + ctx.rule.kind)
 
@@ -339,6 +648,9 @@ def _compilation_database_aspect_impl(target, ctx):
     compilation_db = depset(compilation_db, transitive = transitive_compilation_db)
     all_compdb_files = depset([compdb_file], transitive = all_compdb_files)
     all_header_files.append(target[CcInfo].compilation_context.headers)
+    if cuda_enable and ctx.rule.kind in _cuda_rules:
+        cuda_common = _create_common(ctx)
+        all_header_files.append(cuda_common.headers)
 
     return [
         CompilationAspect(compilation_db = compilation_db),
@@ -365,7 +677,7 @@ compilation_database_aspect = aspect(
     },
     fragments = ["cpp", "objc", "apple"],
     provides = [CompilationAspect],
-    toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
+    toolchains = ["@bazel_tools//tools/cpp:toolchain_type"] + [use_cuda_toolchain] if cuda_enable else [],
     implementation = _compilation_database_aspect_impl,
     apply_to_generating_rules = True,
 )

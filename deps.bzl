@@ -13,6 +13,11 @@
 # limitations under the License.
 
 load("@com_grail_bazel_compdb//:tools.bzl", "setup_tools")
+load("@com_grail_bazel_config_compdb//:config.bzl", "cuda_enable", "register_detected_cuda_toolchains", "rules_cuda_deps")
 
 def bazel_compdb_deps():
     setup_tools()
+
+    if cuda_enable:
+        rules_cuda_deps()
+        register_detected_cuda_toolchains()

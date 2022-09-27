@@ -12,7 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_cuda//cuda:defs.bzl", "cuda_library")
+load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
+load("@com_grail_bazel_output_base_util//:defs.bzl", "OUTPUT_BASE")
+
+cuda_library(
+    name = "d",
+    srcs = ["d.cu"],
+    hdrs = ["d.hpp"],
+    defines = [
+        "USE_NCCL",
+    ],
+)
+
+cc_binary(
+    name = "test",
+    srcs = ["test.cpp"],
+    deps = [":d"],
+)
+
+compilation_database(
+    name = "compdb",
+    output_base = OUTPUT_BASE,
+    targets = [":d"],
+)
 
 cc_library(
     name = "a",
@@ -41,13 +64,4 @@ cc_binary(
 filegroup(
     name = "b_filegrp",
     srcs = ["b"],
-)
-
-load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
-load("@com_grail_bazel_output_base_util//:defs.bzl", "OUTPUT_BASE")
-
-compilation_database(
-    name = "compdb",
-    output_base = OUTPUT_BASE,
-    targets = ["b_filegrp"],
 )
