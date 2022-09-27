@@ -82,6 +82,7 @@ def _config_compdb_repository_impl(rctx):
         build_file_content += _empty_config
 
     build_file_content += "global_filter_flags = %s\ncuda_enable = %s\n" % (rctx.attr.global_filter_flags, rctx.attr.cuda_enable)
+
     if rctx.os.name.lower().startswith("windows"):
         cuda_path = cuda_path.replace("\\", "/")
         mklink_cuda_path = rctx.execute(["cmd", "/c", "echo", "%USERPROFILE%\\AppData\\Local\\CUDA_PATH"]).stdout
@@ -92,6 +93,7 @@ def _config_compdb_repository_impl(rctx):
             fail("getting output base failed (%d): %s" % (res.return_code, res.stderr))
         mklink_cuda_path = mklink_cuda_path.replace("\\", "/")
         cuda_path = mklink_cuda_path
+
     build_file_content += "cuda_path = '%s'\n" % cuda_path
 
     rctx.file("BUILD.bazel", "")

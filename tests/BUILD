@@ -1,4 +1,5 @@
-# Copyright 2017 GRAIL, Inc.
+# Copyright 2017-2022 GRAIL, Inc.
+# Copyright 2022 Aqrose Technology, Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
