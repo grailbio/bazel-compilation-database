@@ -15,9 +15,28 @@
 workspace(name = "com_grail_bazel_compdb")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@com_grail_bazel_compdb//:config.bzl", "config_compdb")
+
+config_compdb(
+    cuda_enable = True,
+    global_filter_flags = [
+        "-ccbin",
+    ],
+)
+
+load("@com_grail_bazel_compdb//:deps.bzl", "bazel_compdb_deps")
+
+bazel_compdb_deps()
 
 http_archive(
-    name = "rules_cc",
-    sha256 = "3057c13fa4d431eb0e7a9c28eea13f25987d29f869406b5ee3f2bd9c4134cb0c",
-    urls = ["https://github.com/bazelbuild/rules_cc/archive/262ebec3c2296296526740db4aefce68c80de7fa.tar.gz"],
+    name = "rules_cuda",
+    sha256 = "a10a7efbf886a42f5c849dd515c22b72a58d37fdd8ee1436327c47f525e70f26",
+    strip_prefix = "rules_cuda-19f91525682511a2825037e3ac568cba22329733",
+    urls = ["https://github.com/cloudhan/rules_cuda/archive/19f91525682511a2825037e3ac568cba22329733.zip"],
 )
+
+load("@rules_cuda//cuda:deps.bzl", "register_detected_cuda_toolchains", "rules_cuda_deps")
+
+rules_cuda_deps()
+
+register_detected_cuda_toolchains()

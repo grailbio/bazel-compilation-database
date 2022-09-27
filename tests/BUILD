@@ -17,24 +17,13 @@ load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
 load("@com_grail_bazel_output_base_util//:defs.bzl", "OUTPUT_BASE")
 
 cuda_library(
-    name = "d",
-    srcs = ["d.cu"],
-    hdrs = ["d.hpp"],
+    name = "example",
+    srcs = ["example.cu"],
+    hdrs = ["example.hpp"],
     defines = [
-        "USE_NCCL",
+        "USE_CUDA",
     ],
-)
-
-cc_binary(
-    name = "test",
-    srcs = ["test.cpp"],
-    deps = [":d"],
-)
-
-compilation_database(
-    name = "compdb",
-    output_base = OUTPUT_BASE,
-    targets = [":d"],
+    visibility = ["//:__pkg__"],
 )
 
 cc_library(
@@ -64,4 +53,13 @@ cc_binary(
 filegroup(
     name = "b_filegrp",
     srcs = ["b"],
+)
+
+load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
+load("@com_grail_bazel_output_base_util//:defs.bzl", "OUTPUT_BASE")
+
+compilation_database(
+    name = "compdb",
+    output_base = OUTPUT_BASE,
+    targets = ["b_filegrp"],
 )

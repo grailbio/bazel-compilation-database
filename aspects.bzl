@@ -565,12 +565,13 @@ def _cuda_compile_commands(ctx, target, cc_toolchain):
     cmdline_list = [cuda_compiler]
     cmdline_list.extend(compiler_options)
     cmdline_list.extend(compile_flags)
-    cmdline_list.append("-cuda-path=%s" % cuda_path)
+    cmdline_list.append("--cuda-path=%s" % cuda_path)
     cmdline = " ".join(cmdline_list)
 
     compile_commands = []
     for src in srcs:
         compile_commands.append(struct(
+            # Add source_file.
             cmdline = cmdline + " -c " + src.path,
             src = src,
         ))

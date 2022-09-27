@@ -1,6 +1,6 @@
-#ifdef USE_NCCL
+#ifdef USE_CUDA
 
-#include "d.hpp"
+#include "example.hpp"
 #include <cstdio>
 
 __global__ void kernel() {

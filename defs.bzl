@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@com_grail_bazel_compdb//:aspects.bzl", "CompilationAspect", "compilation_database_aspect")
-load("@com_grail_bazel_config_compdb//:config.bzl", "cuda_enable", "cuda_path", "global_filter_flags")
+load("@com_grail_bazel_config_compdb//:config.bzl", "global_filter_flags")
 
 def _compilation_database_impl(ctx):
     # Generates a single compile_commands.json file with the
@@ -49,9 +49,6 @@ def _compilation_database_impl(ctx):
     content = content.replace("]", "\n]\n")
 
     ctx.actions.write(output = ctx.outputs.filename, content = content)
-    if cuda_enable:
-        content = "CompileFlags:\n\tAdd:\n\t[\n\t\t'--cuda-path=%s'\n\t]\n" % cuda_path
-        ctx.actions.write(output = ctx.outputs.cuda_path, content = content)
 
     return [
         OutputGroupInfo(
@@ -84,9 +81,6 @@ _compilation_database = rule(
             default = [],
             doc = "Filter the flags in the compilation command that clang does not support.",
         ),
-        "cuda_path": attr.output(
-            doc = "clangd configuration information.",
-        ),
     },
     implementation = _compilation_database_impl,
 )
@@ -94,6 +88,5 @@ _compilation_database = rule(
 def compilation_database(**kwargs):
     _compilation_database(
         filename = kwargs.pop("filename", "compile_commands.json"),
-        cuda_path = kwargs.pop("cuda_path", ".clangd"),
         **kwargs
     )
