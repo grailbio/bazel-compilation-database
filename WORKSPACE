@@ -21,6 +21,7 @@ config_compdb(
     cuda_enable = True,
     global_filter_flags = [
         "-ccbin",
+        "-gencode",
     ],
 )
 
