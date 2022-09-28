@@ -1,4 +1,5 @@
-# Copyright 2021 GRAIL, Inc.
+# Copyright 2021-2022 GRAIL, Inc.
+# Copyright 2022 Aqrose Technology, Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +14,11 @@
 # limitations under the License.
 
 load("@com_grail_bazel_compdb//:tools.bzl", "setup_tools")
+load("@com_grail_bazel_config_compdb//:config.bzl", "cuda_enable", "register_detected_cuda_toolchains", "rules_cuda_deps")
 
 def bazel_compdb_deps():
     setup_tools()
+
+    if cuda_enable:
+        rules_cuda_deps()
+        register_detected_cuda_toolchains()

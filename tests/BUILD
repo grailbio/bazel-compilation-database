@@ -1,4 +1,5 @@
-# Copyright 2017 GRAIL, Inc.
+# Copyright 2017-2022 GRAIL, Inc.
+# Copyright 2022 Aqrose Technology, Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_cuda//cuda:defs.bzl", "cuda_library")
+load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
+load("@com_grail_bazel_output_base_util//:defs.bzl", "OUTPUT_BASE")
+
+cuda_library(
+    name = "example",
+    srcs = ["example.cu"],
+    hdrs = ["example.hpp"],
+    defines = [
+        "USE_CUDA",
+    ],
+    visibility = ["//:__pkg__"],
+)
 
 cc_library(
     name = "a",
