@@ -1,0 +1,19 @@
+{
+    "clangd.arguments": [
+        // Automatic analysis of files in the background.
+        "--background-index",
+        "--compile-commands-dir=${workspaceFolder}/bazel-bin/",
+        // Enable clang-tidy diagnostics.
+        "--clang-tidy",
+        // Global completion, will includes header files automatically.
+        "--all-scopes-completion",
+        // More detailed completions.
+        "--completion-style=detailed",
+        // Style of supplementary header file.
+        "--header-insertion=iwyu",
+        "--function-arg-placeholders",
+        // PCH optimized mode.
+        "--pch-storage=disk",
+    ],
+    "files.insertFinalNewline": true,
+}
