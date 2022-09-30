@@ -186,7 +186,7 @@ def _cc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
     compile_flags.extend(ctx.rule.attr.copts if "copts" in dir(ctx.rule.attr) else [])
 
     # Add automatically `-std=` compilation command for clang.
-    # Only take effect on the first matched value.
+    # Only take effect on the last matched value.
     value = None
     for option in compiler_options:
         if option.find("/std:") != -1:
@@ -523,28 +523,6 @@ def _cuda_compile_commands(ctx, target, cc_toolchain):
         unsupported_features = ctx.disabled_features + DISABLED_FEATURES,
     )
 
-    compile_flags = []
-    for define in cuda_common.defines:
-        compile_flags.append("-D\"{}\"".format(define))
-
-    for define in cuda_common.local_defines:
-        compile_flags.append("-D\"{}\"".format(define))
-
-    for system_include in cuda_common.system_includes:
-        if len(system_include) == 0:
-            system_include = "."
-        compile_flags.append("-isystem {}".format(system_include))
-
-    for include in cuda_common.includes:
-        if len(include) == 0:
-            include = "."
-        compile_flags.append("-I {}".format(include))
-
-    for quote_include in cuda_common.quote_includes:
-        if len(quote_include) == 0:
-            quote_include = "."
-        compile_flags.append("-iquote {}".format(quote_include))
-
     host_compiler = cc_toolchain.compiler_executable
     cuda_compiler = cuda_toolchain.compiler_executable
 
@@ -554,12 +532,21 @@ def _cuda_compile_commands(ctx, target, cc_toolchain):
     compile_variables = cuda_helper.create_compile_variables(
         feature_configuration = feature_configuration,
         cuda_toolchain = cuda_toolchain,
-        compile_flags = cuda_common.compile_flags,
         cuda_archs_info = cuda_common.cuda_archs_info,
         host_compiler = host_compiler,
         # No need for source_file and output_file.
         source_file = "",
         output_file = "",
+        compile_flags = cuda_common.compile_flags,
+        host_compile_flags = cuda_common.host_compile_flags,
+        include_paths = cuda_common.includes,
+        quote_include_paths = cuda_common.quote_includes,
+        system_include_paths = cuda_common.system_includes,
+        defines = cuda_common.local_defines + cuda_common.defines,
+        host_defines = cuda_common.host_local_defines + cuda_common.host_defines,
+        ptxas_flags = cuda_common.ptxas_flags,
+        use_pic = False,
+        use_rdc = False,
     )
 
     compiler_options = cuda_helper.get_command_line(
@@ -576,7 +563,6 @@ def _cuda_compile_commands(ctx, target, cc_toolchain):
 
     cmdline_list = [cuda_compiler]
     cmdline_list.extend(compiler_options)
-    cmdline_list.extend(compile_flags)
     cmdline_list.append("--cuda-path=%s" % cuda_path)
     cmdline = " ".join(cmdline_list)
 

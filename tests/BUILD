@@ -21,9 +21,11 @@ cuda_library(
     name = "example",
     srcs = ["example.cu"],
     hdrs = ["example.hpp"],
+    copts = ["-G"],
     defines = [
         "USE_CUDA",
     ],
+    host_defines = ["USE_TEST"],
     visibility = ["//:__pkg__"],
 )
 
