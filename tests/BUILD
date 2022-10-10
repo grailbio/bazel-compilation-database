@@ -56,6 +56,7 @@ cc_binary(
 filegroup(
     name = "b_filegrp",
     srcs = ["b"],
+    visibility = ["//:__pkg__"],
 )
 
 load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
