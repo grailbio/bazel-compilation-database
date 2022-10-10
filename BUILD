@@ -20,3 +20,10 @@ compilation_database(
     output_base = OUTPUT_BASE,
     targets = ["//tests:example"],
 )
+
+compilation_database(
+    name = "nocuda_compdb",
+    filename = "test.json",
+    output_base = OUTPUT_BASE,
+    targets = ["//tests:b_filegrp"],
+)

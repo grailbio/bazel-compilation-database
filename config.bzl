@@ -62,18 +62,6 @@ cuda_toolkit = ""
 """
 
 def _config_compdb_repository_impl(rctx):
-    cuda_path = rctx.os.environ.get("CUDA_PATH", None)
-    if cuda_path == None:
-        ptxas_path = rctx.which("ptxas")
-        if ptxas_path:
-            # ${CUDA_PATH}/bin/ptxas
-            cuda_path = str(ptxas_path.dirname.dirname)
-    if cuda_path == None and rctx.os.name.startswith("linux"):
-        cuda_path = "/usr/local/cuda"
-
-    if cuda_path != None and not rctx.path(cuda_path).exists:
-        cuda_path = None
-
     build_file_content = ""
 
     if rctx.attr.cuda_enable:
@@ -83,16 +71,31 @@ def _config_compdb_repository_impl(rctx):
 
     build_file_content += "global_filter_flags = %s\ncuda_enable = %s\n" % (rctx.attr.global_filter_flags, rctx.attr.cuda_enable)
 
-    if rctx.os.name.lower().startswith("windows"):
-        cuda_path = cuda_path.replace("\\", "/")
-        mklink_cuda_path = rctx.execute(["cmd", "/c", "echo", "%USERPROFILE%\\AppData\\Local\\CUDA_PATH"]).stdout
-        mklink_cuda_path = mklink_cuda_path[:-2]
-        rctx.execute(["cmd", "/c", "if", "exist", mklink_cuda_path, "(", "rd", "/s", "/q", mklink_cuda_path, ")"])
-        res = rctx.execute(["cmd", "/c", "mklink", "/J", mklink_cuda_path, cuda_path])
-        if res.return_code != 0:
-            fail("getting output base failed (%d): %s" % (res.return_code, res.stderr))
-        mklink_cuda_path = mklink_cuda_path.replace("\\", "/")
-        cuda_path = mklink_cuda_path
+    cuda_path = ""
+
+    if rctx.attr.cuda_enable:
+        cuda_path = rctx.os.environ.get("CUDA_PATH", None)
+        if cuda_path == None:
+            ptxas_path = rctx.which("ptxas")
+            if ptxas_path:
+                # ${CUDA_PATH}/bin/ptxas
+                cuda_path = str(ptxas_path.dirname.dirname)
+        if cuda_path == None and rctx.os.name.startswith("linux"):
+            cuda_path = "/usr/local/cuda"
+
+        if cuda_path != None and not rctx.path(cuda_path).exists:
+            cuda_path = None
+
+        if rctx.os.name.lower().startswith("windows"):
+            cuda_path = cuda_path.replace("\\", "/")
+            mklink_cuda_path = rctx.execute(["cmd", "/c", "echo", "%USERPROFILE%\\AppData\\Local\\CUDA_PATH"]).stdout
+            mklink_cuda_path = mklink_cuda_path[:-2]
+            rctx.execute(["cmd", "/c", "if", "exist", mklink_cuda_path, "(", "rd", "/s", "/q", mklink_cuda_path, ")"])
+            res = rctx.execute(["cmd", "/c", "mklink", "/J", mklink_cuda_path, cuda_path])
+            if res.return_code != 0:
+                fail("getting output base failed (%d): %s" % (res.return_code, res.stderr))
+            mklink_cuda_path = mklink_cuda_path.replace("\\", "/")
+            cuda_path = mklink_cuda_path
 
     build_file_content += "cuda_path = '%s'\n" % cuda_path
 
