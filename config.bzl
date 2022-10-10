@@ -93,7 +93,7 @@ def _config_compdb_repository_impl(rctx):
             rctx.execute(["cmd", "/c", "if", "exist", mklink_cuda_path, "(", "rd", "/s", "/q", mklink_cuda_path, ")"])
             res = rctx.execute(["cmd", "/c", "mklink", "/J", mklink_cuda_path, cuda_path])
             if res.return_code != 0:
-                fail("getting output base failed (%d): %s" % (res.return_code, res.stderr))
+                fail("windows mklink CUDA_PATH failed (%d): %s" % (res.return_code, res.stderr))
             mklink_cuda_path = mklink_cuda_path.replace("\\", "/")
             cuda_path = mklink_cuda_path
 
