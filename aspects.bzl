@@ -294,9 +294,7 @@ def _compilation_database_aspect_impl(target, ctx):
         all_compdb_files.append(dep[OutputGroupInfo].compdb_files)
         all_header_files.append(dep[OutputGroupInfo].header_files)
 
-    # TODO: Remove CcInfo check once https://github.com/bazelbuild/bazel/pull/15426 is released
-    # We support only these rule kinds.
-    if ctx.rule.kind not in _all_rules or CcInfo not in target:
+    if ctx.rule.kind not in _all_rules:
         return [
             CompilationAspect(compilation_db = depset(transitive = transitive_compilation_db)),
             OutputGroupInfo(

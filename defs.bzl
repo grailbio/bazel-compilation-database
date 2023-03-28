@@ -29,11 +29,15 @@ def _compilation_database_impl(ctx):
         all_headers.append(target[OutputGroupInfo].header_files)
 
     compilation_db = depset(transitive = compilation_db)
+
     all_headers = depset(transitive = all_headers)
 
     exec_root = ctx.attr.output_base + "/execroot/" + ctx.workspace_name
 
-    content = json.encode(compilation_db.to_list())
+    content = compilation_db.to_list()
+    if ctx.attr.unique:
+        content = list({element.file:element for element in content}.values())
+    content = json.encode(content)
     content = content.replace("__EXEC_ROOT__", exec_root)
     content = content.replace("-isysroot __BAZEL_XCODE_SDKROOT__", "")
     ctx.actions.write(output = ctx.outputs.filename, content = content)
@@ -61,6 +65,11 @@ _compilation_database = rule(
             doc = ("Makes this operation a no-op; useful in combination with a 'select' " +
                    "for platforms where the internals of this rule are not properly " +
                    "supported."),
+        ),
+        "unique": attr.bool(
+            default = True,
+            doc = ("Remove duplicate entries before writing the database reducing file size." +
+                   "Due to the reduction in entries, this is usually faster too."),
         ),
         "filename": attr.output(
             doc = "Name of the generated compilation database.",
