@@ -99,17 +99,17 @@ def _get_compile_flags(dep):
     for system_include in compilation_context.system_includes.to_list():
         if len(system_include) == 0:
             system_include = "."
-        options.append("-isystem {}".format(system_include))
+        options.extend(("-isystem", system_include))
 
     for include in compilation_context.includes.to_list():
         if len(include) == 0:
             include = "."
-        options.append("-I {}".format(include))
+        options.extend(("-I", include))
 
     for quote_include in compilation_context.quote_includes.to_list():
         if len(quote_include) == 0:
             quote_include = "."
-        options.append("-iquote {}".format(quote_include))
+        options.extend(("-iquote", quote_include))
 
     for framework_include in compilation_context.framework_includes.to_list():
         options.append("-F\"{}\"".format(framework_include))
@@ -164,7 +164,7 @@ def _cc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
             action_name = CPP_COMPILE_ACTION_NAME,
             variables = compile_variables,
         )
-        compile_flags.append("-x c++")  # Force language mode for header files.
+        compile_flags.extend(("-x", "c++"))  # Force language mode for header files.
     else:
         compile_variables = cc_common.create_compile_variables(
             feature_configuration = feature_configuration,
@@ -182,12 +182,11 @@ def _cc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
     cmdline_list = [compiler]
     cmdline_list.extend(compiler_options)
     cmdline_list.extend(compile_flags)
-    cmdline = " ".join(cmdline_list)
 
     compile_commands = []
     for src in srcs:
         compile_commands.append(struct(
-            cmdline = cmdline + " -c " + src.path,
+            cmdline_list = tuple(cmdline_list + ["-c", src.path]),
             src = src,
         ))
     return compile_commands
@@ -225,7 +224,7 @@ def _objc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
             action_name = OBJCPP_COMPILE_ACTION_NAME,
             variables = compile_variables,
         )
-        compile_flags.append("-x objective-c++")  # Force language mode for header files.
+        compile_flags.extend(("-x", "objective-c++"))  # Force language mode for header files.
     else:
         compile_variables = cc_common.create_compile_variables(
             feature_configuration = feature_configuration,
@@ -237,7 +236,7 @@ def _objc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
             action_name = OBJC_COMPILE_ACTION_NAME,
             variables = compile_variables,
         )
-        compile_flags.append("-x objective-c")  # Force language mode for header files.
+        compile_flags.extend(("-x","objective-c"))  # Force language mode for header files.
 
     frameworks = (
         ["-F {}/..".format(val) for val in target.objc.static_framework_paths.to_list()] +
@@ -249,22 +248,21 @@ def _objc_compile_commands(ctx, target, feature_configuration, cc_toolchain):
 
     xcode_paths = _xcode_paths(ctx)
     system_flags = [
-        "-isysroot {}".format(xcode_paths.sdk_root),
-        "-F {}/System/Library/Frameworks".format(xcode_paths.sdk_root),
-        "-F {}/Developer/Library/Frameworks".format(xcode_paths.platform_root),
+        "-isysroot", xcode_paths.sdk_root,
+        "-F", "{}/System/Library/Frameworks".format(xcode_paths.sdk_root),
+        "-F", "{}/Developer/Library/Frameworks".format(xcode_paths.platform_root),
     ]
 
     cmdline_list = [compiler]
     cmdline_list.extend(compiler_options)
     cmdline_list.extend(system_flags)
     cmdline_list.extend(compile_flags)
-    cmdline = " ".join(cmdline_list)
 
     compile_commands = []
     for src in srcs:
-        arc_flag = "" if src in non_arc_srcs else " -fobjc-arc"
+        arc_flag = None if src in non_arc_srcs else "-fobjc-arc"
         compile_commands.append(struct(
-            cmdline = cmdline + arc_flag + " -c " + src.path,
+            cmdline_list = tuple(cmdline_list + [arc_flag, "-c", src.path]),
             src = src,
         ))
     return compile_commands
@@ -325,7 +323,7 @@ def _compilation_database_aspect_impl(target, ctx):
     for compile_command in compile_commands:
         exec_root_marker = "__EXEC_ROOT__"
         compilation_db.append(
-            struct(command = compile_command.cmdline, directory = exec_root_marker, file = compile_command.src.path),
+            struct(arguments = compile_command.cmdline_list, directory = exec_root_marker, file = compile_command.src.path),
         )
         srcs.append(compile_command.src)
 

@@ -37,7 +37,11 @@ def _compilation_database_impl(ctx):
     content = compilation_db.to_list()
     if ctx.attr.unique:
         content = list({element.file:element for element in content}.values())
-    content = json.encode(content)
+
+    if ctx.attr.indent:
+        content = json.encode_indent(content)
+    else:
+        content = json.encode(content)
     content = content.replace("__EXEC_ROOT__", exec_root)
     content = content.replace("-isysroot __BAZEL_XCODE_SDKROOT__", "")
     ctx.actions.write(output = ctx.outputs.filename, content = content)
@@ -70,6 +74,11 @@ _compilation_database = rule(
             default = True,
             doc = ("Remove duplicate entries before writing the database, reducing file size " +
                    "and potentially being faster."),
+        ),
+        "indent": attr.bool(
+            default = False,
+            doc = ("Output human-readable json with linebreaks & indentation. " +
+                   "Slightly slows database generation."),
         ),
         "filename": attr.output(
             doc = "Name of the generated compilation database.",
