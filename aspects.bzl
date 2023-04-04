@@ -281,6 +281,8 @@ def _compilation_database_aspect_impl(target, ctx):
         deps.extend(ctx.rule.attr.srcs)
     if hasattr(ctx.rule.attr, "deps"):
         deps.extend(ctx.rule.attr.deps)
+    if hasattr(ctx.rule.attr, "implementation_deps"):
+        deps.extend(ctx.rule.attr.implementation_deps)
 
     transitive_compilation_db = []
     all_compdb_files = []
@@ -292,9 +294,7 @@ def _compilation_database_aspect_impl(target, ctx):
         all_compdb_files.append(dep[OutputGroupInfo].compdb_files)
         all_header_files.append(dep[OutputGroupInfo].header_files)
 
-    # TODO: Remove CcInfo check once https://github.com/bazelbuild/bazel/pull/15426 is released
-    # We support only these rule kinds.
-    if ctx.rule.kind not in _all_rules or CcInfo not in target:
+    if ctx.rule.kind not in _all_rules:
         return [
             CompilationAspect(compilation_db = depset(transitive = transitive_compilation_db)),
             OutputGroupInfo(
@@ -356,7 +356,7 @@ def _compilation_database_aspect_impl(target, ctx):
 compilation_database_aspect = aspect(
     # Also include srcs in the attribute aspects so people can use filegroup targets.
     # See https://github.com/grailbio/bazel-compilation-database/issues/84.
-    attr_aspects = ["srcs", "deps"],
+    attr_aspects = ["srcs", "deps", "implementation_deps"],
     attrs = {
         "_cc_toolchain": attr.label(
             default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
