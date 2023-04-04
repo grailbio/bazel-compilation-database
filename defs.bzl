@@ -26,7 +26,8 @@ def _compilation_database_impl(ctx):
     all_headers = []
     for target in ctx.attr.targets:
         compilation_db.append(target[CompilationAspect].compilation_db)
-        all_headers.append(target[OutputGroupInfo].header_files)
+        if ctx.attr.generate_header_output_group:
+            all_headers.append(target[OutputGroupInfo].header_files)
 
     compilation_db = depset(transitive = compilation_db)
 
@@ -42,11 +43,12 @@ def _compilation_database_impl(ctx):
     content = content.replace("-isysroot __BAZEL_XCODE_SDKROOT__", "")
     ctx.actions.write(output = ctx.outputs.filename, content = content)
 
-    return [
-        OutputGroupInfo(
-            default = all_headers,
-        ),
-    ]
+    if ctx.attr.generate_header_output_group:
+        return [
+           OutputGroupInfo(
+               default = all_headers,
+           ),
+        ]
 
 _compilation_database = rule(
     attrs = {
@@ -70,6 +72,11 @@ _compilation_database = rule(
             default = True,
             doc = ("Remove duplicate entries before writing the database, reducing file size " +
                    "and potentially being faster."),
+        ),
+        "header_output_group": attr.bool(
+            default = False,
+            doc = ("Causes the rule to generate an an output group containing all headers. " +
+                  "Enabling will cause any build rules which output discovered header files to be run"),
         ),
         "filename": attr.output(
             doc = "Name of the generated compilation database.",
