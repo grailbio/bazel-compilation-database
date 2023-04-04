@@ -68,8 +68,8 @@ _compilation_database = rule(
         ),
         "unique": attr.bool(
             default = True,
-            doc = ("Remove duplicate entries before writing the database reducing file size." +
-                   "Due to the reduction in entries, this is usually faster too."),
+            doc = ("Remove duplicate entries before writing the database, reducing file size " +
+                   "and potentially being faster."),
         ),
         "filename": attr.output(
             doc = "Name of the generated compilation database.",
