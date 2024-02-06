@@ -1,4 +1,4 @@
-# Copyright 2021 GRAIL, Inc.
+# Copyright 2024 The Bazel Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@com_grail_bazel_compdb//:aspects.bzl", "CompilationAspect", "compilation_database_aspect")
+load("@rules_compdb//:aspects.bzl", "CompilationAspect", "compilation_database_aspect")
 
 def _compilation_database_impl(ctx):
     # Generates a single compile_commands.json file with the
@@ -36,7 +36,7 @@ def _compilation_database_impl(ctx):
 
     content = compilation_db.to_list()
     if ctx.attr.unique:
-        content = list({element.file:element for element in content}.values())
+        content = list({element.file: element for element in content}.values())
     content = json.encode(content)
     content = content.replace("__EXEC_ROOT__", exec_root)
     content = content.replace("-isysroot __BAZEL_XCODE_SDKROOT__", "")

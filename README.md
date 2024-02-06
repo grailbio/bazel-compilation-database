@@ -73,20 +73,20 @@ For example,
 In your WORKSPACE file:
 ```python
 http_archive(
-    name = "com_grail_bazel_compdb",
+    name = "rules_compdb",
     strip_prefix = "bazel-compilation-database-0.5.2",
     urls = ["https://github.com/grailbio/bazel-compilation-database/archive/0.5.2.tar.gz"],
 )
 
-load("@com_grail_bazel_compdb//:deps.bzl", "bazel_compdb_deps")
-bazel_compdb_deps()
+load("@rules_compdb//:deps.bzl", "rules_compdb_deps")
+rules_compdb_deps()
 ```
 
 In your BUILD file located in any package:
 ```python
 ## Replace workspace_name and dir_path as per your setup.
-load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
-load("@com_grail_bazel_output_base_util//:defs.bzl", "OUTPUT_BASE")
+load("@rules_compdb//:defs.bzl", "compilation_database")
+load("@bazel_output_base_util//:defs.bzl", "OUTPUT_BASE")
 
 compilation_database(
     name = "example_compdb",

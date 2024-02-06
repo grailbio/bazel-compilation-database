@@ -1,4 +1,4 @@
-# Copyright 2017 GRAIL, Inc.
+# Copyright 2024 The Bazel Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ filegroup(
     srcs = ["b"],
 )
 
-load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
-load("@com_grail_bazel_output_base_util//:defs.bzl", "OUTPUT_BASE")
+load("@rules_compdb//:defs.bzl", "compilation_database")
+load("@bazel_output_base_util//:defs.bzl", "OUTPUT_BASE")
 
 compilation_database(
     name = "compdb",

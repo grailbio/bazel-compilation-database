@@ -1,4 +1,4 @@
-# Copyright 2021 GRAIL, Inc.
+# Copyright 2024 The Bazel Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@com_grail_bazel_compdb//:tools.bzl", "setup_tools")
+load("@rules_compdb//:tools.bzl", "setup_tools")
 
-def bazel_compdb_deps():
+def rules_compdb_deps():
     setup_tools()

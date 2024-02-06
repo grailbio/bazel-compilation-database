@@ -1,4 +1,4 @@
-# Copyright 2021 GRAIL, Inc.
+# Copyright 2024 The Bazel Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,5 +39,5 @@ bazel_output_base_util = repository_rule(
 
 def setup_tools():
     bazel_output_base_util(
-        name = "com_grail_bazel_output_base_util",
+        name = "bazel_output_base_util",
     )
