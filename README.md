@@ -1,5 +1,17 @@
-Compilation database with Bazel [![Tests](https://github.com/grailbio/bazel-compilation-database/actions/workflows/tests.yml/badge.svg)](https://github.com/grailbio/bazel-compilation-database/actions/workflows/tests.yml) [![Migration](https://github.com/grailbio/bazel-compilation-database/actions/workflows/migration.yml/badge.svg)](https://github.com/grailbio/bazel-compilation-database/actions/workflows/migration.yml)
+Compilation database with Bazel
 ===============================
+
+## Status
+
+This repository is no longer maintained. Please consider one of the alternatives below.
+
+#### Alternative/Derived implementations:
+
+- https://github.com/hedronvision/bazel-compile-commands-extractor
+  - Uses an alternate approach based on aquery. This directly asks Bazel for its exact build commands, while still being fast and not requiring a full build. Avoids whole categories of issues.
+- https://github.com/stackb/bazel-stack-vscode-cc
+
+## Introduction
 
 If you use [Bazel][bazel] and want to use libclang based editors and tools, you
 can now generate [JSON compilation database][compdb] easily without using build
@@ -8,21 +20,6 @@ your source code does not compile, and the generation process is much faster.
 
 For more information on compilation database, [Guillaume Papin][sarcasm] has an
 [excellent article][compdb2].
-
-
-## Status
-
-This repository is now in **maintenance mode**. If you have a well-maintained
-fork of this repository, or an alternative implementation, please let me know
-and I will be very happy to redirect people to your repository. If you would
-like to continue contributing to this repository, please let me know and I can
-give you write access.
-
-#### Alternative/Derived implementations:
-
-- https://github.com/hedronvision/bazel-compile-commands-extractor
-  - Uses an alternate approach based on aquery. This directly asks Bazel for its exact build commands, while still being fast and not requiring a full build. Avoids whole categories of issues.
-- https://github.com/stackb/bazel-stack-vscode-cc
 
 
 ## How to Use
